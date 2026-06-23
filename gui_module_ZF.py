@@ -34,4 +34,4 @@ def update_window(sender):
     pass
 
 ZF_window = gui_window(name = 'ZF test interface',menu_label='ZF test', window_tag = 'ZFWindow', 
-                            setup_callback=setup_window, update_callback=update_window,width=600,height=700)
+                            setup_callback=setup_window, update_callback=update_window)

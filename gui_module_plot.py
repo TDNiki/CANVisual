@@ -88,7 +88,7 @@ def update_plot_window(sender):
     # update_plot_table()
     pass
 
-plot_window = gui_window(name='Plot',menu_label='Plot',window_tag='PlotWindow',width=1000,height=600,setup_callback=setup_plot_window,update_callback=update_plot_window)
+plot_window = gui_window(name='Plot',menu_label='Plot',window_tag='PlotWindow',setup_callback=setup_plot_window,update_callback=update_plot_window)
 
 def add_signal_to_plot_drop(sender, app_data):
     signal_name = str(app_data[1])

@@ -55,7 +55,7 @@ def update_bus_window(sender):
     pass
 
 bus_window = gui_window(name = 'Bus Connection', menu_label='BusConnection', window_tag='BusCon', 
-                        setup_callback=setup_bus_window, update_callback=update_bus_window,open_callback=open_bus_window,no_resize=True, show=True)
+                        setup_callback=setup_bus_window, update_callback=update_bus_window,open_callback=open_bus_window)
 
 
 def choose_device(sender,app_data):

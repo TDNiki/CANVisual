@@ -23,8 +23,11 @@ class WindowsConfigManager:
                 ...
                 
 
-    def get_configs(self):
-        return self.__configs
+    def get_configs(self) -> dict[str, object]:
+        config_dict = {}
+        for config in self.__configs:
+            config_dict[config.id] = config
+        return config_dict
     
 
     def set_config(
@@ -32,16 +35,12 @@ class WindowsConfigManager:
         id: str,
         title: str,
         size: tuple[float, float],
-        pos: tuple[int, int],
-        no_move: bool = True,
-        no_resize: bool = True,
+        pos: tuple[float, float],
         ):
 
         wconfig = WindowConfig(
             id = id,
             title = title,
-            no_move = no_move,
-            no_resize = no_resize,
             size = size,
             pos = pos)
         
@@ -81,17 +80,15 @@ class WindowConfig:
 
     id: str
     title: str
-    no_move: bool
-    no_resize: bool
     size: tuple[float, float]
-    pos: tuple[int, int]
+    pos: tuple[float, float]
 
 
-a = WindowsConfigManager("C:\\Users\\Никита\\Desktop\\camozzi\\CANVisual\\guiconfigs.json")
+"""a = WindowsConfigManager("C:\\Users\\Никита\\Desktop\\camozzi\\CANVisual\\guiconfigs.json")
 
 a.set_config(
-    id = "bus",
-    title = "Окно подключения",
-    size = (1, 0.1),
-    pos = (0, 0)
-)
+    id = "signals",
+    title = "Сигналы",
+    size = (0.3, 0.4),
+    pos = (0, 0.5)
+)"""
