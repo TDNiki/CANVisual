@@ -28,7 +28,7 @@ deinit_event = False
 # init_time = time.time()
 init_time = 0
 
-def initialize_can_bus(interface,channel,bitrate = 500):
+def initialize_can_bus(interface,channel, bitrate=500000):
     global bus
     
     if not bus:

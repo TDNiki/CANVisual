@@ -122,11 +122,11 @@ class AppGui:
 
         current_time = time.time()
         if current_time - self.__last_update_time >= set_update_interval():  # Обновление интерфейса согласно частоте
-            #recieve_window.update()
-            #signal_window.update()
-            #bus_window.update()
-            #ZF_window.update()
-            #plot_window.update()
+            recieve_window.update()
+            signal_window.update()
+            bus_window.update()
+            ZF_window.update()
+            plot_window.update()
             self.__last_update_time = current_time
         dpg.render_dearpygui_frame()
 
