@@ -2,11 +2,12 @@ import dearpygui.dearpygui as dpg
 from window_class import gui_window
 from can_interface import message_frequencies,initialize_can_bus,detect_avalible_config,deinit_bus
 from collections import defaultdict
-import re
 
 avalible_devices = defaultdict(lambda:{'name': [], 'interface': [], 'channel': 0})
 # avalible_devices = {'name': [], 'interface': [], 'channel': 0}
 # avalible_devices = {}
+
+
 
 def setup_bus_window(sender):
     dpg.add_text("Devices")

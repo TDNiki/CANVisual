@@ -11,6 +11,7 @@ from gui_module_plot import plot_window
 from gui_modul_connect import bus_window
 from gui_modul_dbc import dbc_window
 from gui_module_ZF import ZF_window
+#from GuiConnections import bus_window
 
 CONFIG_WINDOWS_PATH = "guiconfigs.json"
 
@@ -84,7 +85,7 @@ class AppGui:
     def __setup_gui(self):     
 
         dpg.create_context()
-        dpg.create_viewport(title="CAN GUI", width=1200, height=800, min_width=1200, min_height=800)
+        dpg.create_viewport(title="CAN GUI", min_width=1200, min_height=800)
         dpg.setup_dearpygui()
         dpg.show_viewport()
         

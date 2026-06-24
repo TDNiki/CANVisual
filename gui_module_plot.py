@@ -245,7 +245,7 @@ def update_plot():
                 pass
 
 def update_plot_new():
-    global x_wight,sublots_axis_item
+    global x_wight, sublots_axis_item
     lim = dpg.get_axis_limits("time")
     plot_time = round((lim[1]-lim[0])*10)/10
     x_wight = plot_time
