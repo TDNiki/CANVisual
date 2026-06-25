@@ -9,10 +9,16 @@ class BusLogic:
         self.can = CANManager()
         pass
 
-    def update_available_bus(self, combo_tag: str):
-        print('call')
+    def update_available_interfaces(self, combo_tag: str):
         self.can.scan_available_configs()
-        dpg.configure_item(combo_tag, items=self.can.get_configs())
+        dpg.configure_item(combo_tag, items=self.get_available_interfaces())
+
+    def get_available_interfaces(self) -> tuple[str]:
+        interfaces = list()
+        for config in self.can.get_configs():
+            interfaces.append(f"{config['interface']} : {config['channel']}")
+        return interfaces
+
 
 
 class BusConnectionWindow(BaseWindow):
@@ -48,10 +54,10 @@ class BusConnectionWindow(BaseWindow):
                 
                 with dpg.table_row():
                     
-                    dpg.add_button(label="Найти", width=-1, callback = lambda: cls.logic.update_available_bus("device_combo"))
+                    dpg.add_button(label="Найти", width=-1, callback = lambda: cls.logic.update_available_interfaces("device_combo"))
                     dpg.add_loading_indicator(tag = f"{cls.tag}_loading", show = False, height=-1, radius=1)
 
-                    dpg.add_combo(cls.logic.can.get_configs(), tag="device_combo", width=-1)
+                    dpg.add_combo(cls.logic.get_available_interfaces(), tag="device_combo", width=-1)
 
                     dpg.add_combo(
                         ["250", "500"],
