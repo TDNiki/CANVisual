@@ -152,6 +152,9 @@ class CANManager:
 
         self.thread.start()
 
+    def get_connection_status(self):
+        return self.thread.is_alive()
+
     def disconnect(self):
 
         self.scanner.stop()

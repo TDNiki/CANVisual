@@ -18,6 +18,19 @@ class BusLogic:
         for config in self.can.get_configs():
             interfaces.append(f"{config['interface']} : {config['channel']}")
         return interfaces
+    
+    def on_connect_click(self, combo_tag: str):
+
+        try:
+            interface, channel = dpg.get_value(combo_tag).split(" : ") # format "vector : chnannel"
+            self.can.connect(interface, channel)
+        except ValueError:
+            return # пока заглушка для ошибки
+        except Exception as err:
+            print(err)
+        
+        
+
 
 
 
@@ -67,8 +80,9 @@ class BusConnectionWindow(BaseWindow):
                     )
 
                     dpg.add_button(
-                        label="Подключить",
-                        width=-1
+                        label = "Подключить",
+                        width = -1,
+                        callback = lambda: cls.logic.on_connect_click("device_combo")
                     )
 
     @classmethod
