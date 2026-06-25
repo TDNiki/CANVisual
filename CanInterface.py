@@ -12,7 +12,7 @@ class CANDriver:
             bitrate=bitrate
         )
 
-    def recv(self, timeout=1.0):
+    def recv(self, timeout=0.1):
         return self.bus.recv(timeout)
 
     def close(self):
@@ -114,11 +114,12 @@ class CANManager:
 
     
 
-    def __init__(self, dbc_path):
-        try:
-            self.db = cantools.database.load_file(dbc_path)
-        except Exception as error:
-            raise  ValueError(f"Can't load dbc file correctly: {error}")
+    def __init__(self, dbc_path = None):
+        if dbc_path is not None:
+            try:
+                self.db = cantools.database.load_file(dbc_path)
+            except Exception as error:
+                raise  ValueError(f"Can't load dbc file correctly: {error}")
         
         self.scan_available_configs()
         self.thread = None

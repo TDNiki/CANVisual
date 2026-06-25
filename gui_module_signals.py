@@ -19,11 +19,7 @@ def setup_dbc_signals_window(sender):
         dpg.add_button(label="Collapse")
         dpg.add_button(label="Clear")
 
-    # with dpg.table(header_row=True, resizable=True, policy=dpg.mvTable_SizingStretchProp, borders_innerH=True, 
-    #             borders_outerH=True, borders_innerV=True, borders_outerV=True, row_background=True, tag='SignalsTable'):
-    #     dpg.add_table_column(label='Message ID')
-    #     dpg.add_table_column(label='Signal Name')
-    #     dpg.add_table_column(label='Value')
+    
 
 def update_dbc_signals_window(sender):
     # Удаляем старые строки, чтобы избежать дублирования

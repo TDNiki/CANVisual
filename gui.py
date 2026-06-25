@@ -3,7 +3,6 @@ from can_interface import send_can_message, available_signals, plot_signals, sig
 from utils import set_update_interval
 from math import sin
 import time
-from gui_windows_config import WindowsConfigManager
 
 from gui_module_recieve import recieve_window
 from gui_module_signals import signal_window
@@ -11,7 +10,13 @@ from gui_module_plot import plot_window
 from gui_modul_connect import bus_window
 from gui_modul_dbc import dbc_window
 from gui_module_ZF import ZF_window
-#from GuiConnections import bus_window
+
+from GuiModules.BusConnectionWindow import BusConnectionWindow
+from GuiModules.DBCConnectionWindow import DBCConnectionWindow
+from GuiModules.MessagesWindow import MessagesWindow
+from GuiModules.SignalsWindow import SignalsWindow
+from GuiModules.PlotWindow import PlotWindow
+
 
 CONFIG_WINDOWS_PATH = "guiconfigs.json"
 
@@ -22,18 +27,11 @@ class AppGui:
 
     #windows = [bus_window, recieve_window, dbc_window, signal_window, plot_window]
     
-    windows = {
-        "bus": bus_window,
-        "plot": plot_window,
-        "msgs": recieve_window,
-        "signals": signal_window
-    }
+    windows = [BusConnectionWindow, DBCConnectionWindow, MessagesWindow, SignalsWindow, PlotWindow]
 
 
 
     def __init__(self):
-        cm = WindowsConfigManager(CONFIG_WINDOWS_PATH)
-        self.__configs = cm.get_configs()
         self.__setup_gui()
         self.__last_update_time = time.time()
 
@@ -41,7 +39,7 @@ class AppGui:
     @staticmethod
     def __set_up_font():
         with dpg.font_registry():
-            with dpg.font("Fonts\\timesnewromanpsmt.ttf", 13, default_font=True, tag="Default font") as f:
+            with dpg.font("Fonts\\timesnewromanpsmt.ttf", 13, default_font=True, tag="Default font"):
                 dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
     
         dpg.bind_font("Default font")
@@ -64,8 +62,8 @@ class AppGui:
                 dpg.add_theme_color(dpg.mvThemeCol_Border,(100, 100, 100, 255))
                 dpg.add_theme_style(dpg.mvStyleVar_WindowBorderSize, 1)
 
-            for uicomponent in self.windows.keys():
-                dpg.bind_item_theme(uicomponent, flat_window_theme)
+            for uicomponent in self.windows:
+                dpg.bind_item_theme(uicomponent.tag, flat_window_theme)
 
         
 
@@ -75,11 +73,15 @@ class AppGui:
         height = dpg.get_viewport_client_height()
 
         
-        for win_id, cfg in self.__configs.items():
-            dpg.set_item_width(win_id, int(width * cfg.size[0]))
-            dpg.set_item_height(win_id, int(height * cfg.size[1]))
+        for window_obj in self.windows:
 
-            dpg.set_item_pos(win_id, (int(width *cfg.pos[0]), int(height * cfg.pos[1])))
+            w, h, x, y = window_obj.resize_window(width, height)
+            dpg.configure_item(
+                window_obj.tag,
+                width=w,
+                height=h,
+                pos=(x, y)
+            )
 
 
     def __setup_gui(self):     
@@ -92,21 +94,9 @@ class AppGui:
         
         
         
-        width = dpg.get_viewport_client_width()
-        height = dpg.get_viewport_client_height()
 
-        for id, sub_gui in self.windows.items():
-           sub_gui.tag = id
+        for sub_gui in self.windows:
            sub_gui.setup()
-
-           """ with dpg.window(
-                tag=id,
-                label=self.__configs[id].title,
-                no_move=True,
-                no_resize=True,
-                no_collapse=True,
-                no_close=True):
-                dpg.add_text(f"тут будет содержание модуля {id}")"""
         
         self.__set_up_font()
         self.__set_up_theme()
@@ -123,11 +113,11 @@ class AppGui:
 
         current_time = time.time()
         if current_time - self.__last_update_time >= set_update_interval():  # Обновление интерфейса согласно частоте
-            recieve_window.update()
-            signal_window.update()
-            bus_window.update()
-            ZF_window.update()
-            plot_window.update()
+            #recieve_window.update()
+            #signal_window.update()
+            #bus_window.update()
+            #ZF_window.update()
+            #plot_window.update()
             self.__last_update_time = current_time
         dpg.render_dearpygui_frame()
 
