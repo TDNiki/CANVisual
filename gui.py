@@ -16,11 +16,14 @@ from GuiModules.DBCConnectionWindow import DBCConnectionWindow
 from GuiModules.MessagesWindow import MessagesWindow
 from GuiModules.SignalsWindow import SignalsWindow
 from GuiModules.PlotWindow import PlotWindow
+from CanInterface import CANData
 
 
 CONFIG_WINDOWS_PATH = "guiconfigs.json"
 
+class AppLogic:
 
+    data = CANData()
 
 class AppGui:
     """"""
@@ -31,9 +34,11 @@ class AppGui:
 
 
 
-    def __init__(self):
+    def __init__(self, update_interval = 0.1):
+        self.logic = AppLogic()
         self.__setup_gui()
         self.__last_update_time = time.time()
+        self.update_interval = update_interval
 
         
     @staticmethod
@@ -64,6 +69,14 @@ class AppGui:
 
             for uicomponent in self.windows:
                 dpg.bind_item_theme(uicomponent.tag, flat_window_theme)
+        
+        with dpg.theme() as button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, (50, 100, 200))
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (70, 120, 220))
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (30, 80, 180))
+
+        dpg.bind_theme(button_theme)
 
         
 
@@ -87,7 +100,7 @@ class AppGui:
     def __setup_gui(self):     
 
         dpg.create_context()
-        dpg.create_viewport(title="CAN GUI", min_width=1200, min_height=800)
+        dpg.create_viewport(title="CAN GUI", width = 1600, height=900, min_width=1200, min_height=800)
         dpg.setup_dearpygui()
         dpg.show_viewport()
         
@@ -96,7 +109,7 @@ class AppGui:
         
 
         for sub_gui in self.windows:
-           sub_gui.setup()
+           sub_gui.setup(data = self.logic.data)
         
         self.__set_up_font()
         self.__set_up_theme()
@@ -110,15 +123,15 @@ class AppGui:
 
 
     def update_gui(self):
-
+        
         current_time = time.time()
-        if current_time - self.__last_update_time >= set_update_interval():  # Обновление интерфейса согласно частоте
-            #recieve_window.update()
-            #signal_window.update()
-            #bus_window.update()
-            #ZF_window.update()
-            #plot_window.update()
+        if current_time - self.__last_update_time >= self.update_interval:  # Обновление интерфейса согласно частоте
+            
+            for window in self.windows:
+                window.logic.update()
+            
             self.__last_update_time = current_time
+
         dpg.render_dearpygui_frame()
 
 

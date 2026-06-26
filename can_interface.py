@@ -30,7 +30,7 @@ init_time = 0
 
 def initialize_can_bus(interface,channel, bitrate=500000):
     global bus
-    
+    print(channel)
     if not bus:
         if interface == 'vector':
             try:

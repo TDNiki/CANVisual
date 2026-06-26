@@ -4,6 +4,10 @@ from BaseWindow import BaseWindow
 
 def end_point():return
 
+class SignalLogic:
+
+    def update(self): return
+
 
 class SignalsWindow(BaseWindow):
 
@@ -11,9 +15,11 @@ class SignalsWindow(BaseWindow):
     title = "Сигналы"
     size = (0.3, 0.45)
     position = (0, 0.55)
+    logic = SignalLogic()
 
     @classmethod
-    def setup(cls):
+    def setup(cls, *args, **kwargs):
+        cls.data = kwargs['data']
         with dpg.window(
             tag=cls.tag,
             label=cls.title,

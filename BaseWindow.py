@@ -4,6 +4,7 @@ class BaseWindow:
     title = ""
     size = (0, 0)
     position = (0, 0)
+    data = None
 
     @classmethod
     def setup(cls):

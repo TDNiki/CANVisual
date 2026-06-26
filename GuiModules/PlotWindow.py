@@ -4,6 +4,9 @@ from BaseWindow import BaseWindow
 
 def end_point():return
 
+class PlotLogic:
+
+    def update(self): return
 
 class PlotWindow(BaseWindow):
 
@@ -11,9 +14,11 @@ class PlotWindow(BaseWindow):
     title = "Визуализация данных"
     size = (0.7, 0.9)
     position = (0.3, 0.1)
+    logic = PlotLogic()
 
     @classmethod
-    def setup(cls):
+    def setup(cls, *args, **kwargs):
+        cls.data = kwargs['data']
         with dpg.window(
             tag=cls.tag,
             label=cls.title,
