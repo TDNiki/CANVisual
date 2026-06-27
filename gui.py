@@ -19,8 +19,6 @@ from GuiModules.PlotWindow import PlotWindow
 from CanInterface import CANData
 
 
-CONFIG_WINDOWS_PATH = "guiconfigs.json"
-
 class AppLogic:
 
     data = CANData()
@@ -110,6 +108,8 @@ class AppGui:
 
         for sub_gui in self.windows:
            sub_gui.setup(data = self.logic.data)
+        
+        SignalsWindow.logic.plot_logic = PlotWindow.logic # костыль, ну что поделать
         
         self.__set_up_font()
         self.__set_up_theme()

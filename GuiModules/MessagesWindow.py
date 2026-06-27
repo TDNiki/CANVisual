@@ -3,6 +3,8 @@ import dearpygui.dearpygui as dpg
 from BaseWindow import BaseWindow
 from CanInterface import CANData
 from datetime import datetime
+from time import monotonic
+
 
 def end_point(): ...
 
@@ -14,7 +16,6 @@ class MessagesLogic:
         self.data = data
         self.msg_table_tag = msg_table_tag
         self.msg_trace_tag = msg_trace_tag
-
     
     
     def _update_rates(self):
@@ -25,14 +26,10 @@ class MessagesLogic:
 
         for msg_id, msg in self.data.get_messages_snapshot().items():
 
-            color = (
-                (150, 200, 255, 255)
-                if msg["is_dbc"]
-                else (255, 255, 255, 255)
-            )
+            color = ((150, 200, 255, 255) if msg["is_dbc"] else (255, 255, 255, 255))
 
-            with dpg.table_row(parent=self.msg_table_tag):
 
+            with dpg.table_row(parent=self.msg_table_tag) as row:
                 dpg.add_text(f"{msg_id:08X}", color=color)
                 dpg.add_text(str(msg["count"]))
                 dpg.add_text(f"{msg['frequency']*1000:.2f}") #sec to ms
@@ -45,6 +42,7 @@ class MessagesLogic:
                 else:
                     dpg.add_text("-")
 
+
     def _update_track(self):
         
         rows = dpg.get_item_children(self.msg_trace_tag, 1)
@@ -53,9 +51,7 @@ class MessagesLogic:
             dpg.delete_item(row)
 
         for msg in self.data.get_trace_snapshot():
-
             with dpg.table_row(parent=self.msg_trace_tag):
-                # dpg.add_text(str(msg.timestamp))
                 dpg.add_text(datetime.fromtimestamp(msg.timestamp).strftime('%H:%M:%S.%f')[:-3])
                 dpg.add_text(f"{msg.arbitration_id:08X}")
                 dpg.add_text(str(msg.dlc))

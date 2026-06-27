@@ -4,7 +4,8 @@ import cantools
 
 from collections import defaultdict
 from can.interfaces.vector import VectorBus
-from collections import deque # bufer, max = auto deletion first 
+from collections import deque # bufer, max = auto deletion first
+from time import monotonic 
 
 class CANDriver:
     def __init__(self, interface, channel, bitrate=500000, app_name = None):
@@ -67,7 +68,7 @@ class CANData:
         self.signals = defaultdict(list)
         self.signal_plot = defaultdict(lambda: {"time": deque(maxlen=plot_data_max_size), "value": deque(maxlen=plot_data_max_size)})
 
-    def update_message(self, msg_id, data, dlc, receive_msg_timestamp, is_dbc=False, decoded=None):
+    def update_message(self, msg_id, data, dlc, receive_msg_timestamp, dbc_name:str = None, is_dbc=False, decoded=None):
 
         with self.lock:
 
@@ -75,10 +76,12 @@ class CANData:
                 self.messages[msg_id] = {
                     "count": 0,
                     "receive_time": receive_msg_timestamp,
+                    "last_receive_time": monotonic(),
                     "frequency": 0,
                     "dlc": 0,
                     "data": None,
                     "is_dbc": False,
+                    "dbc_name": dbc_name or "",
                     "decoded": {}
                 }
 
@@ -89,9 +92,11 @@ class CANData:
                 msg["count"] += 1
                 msg["frequency"] = receive_msg_timestamp - msg["receive_time"]
                 msg['receive_time'] = receive_msg_timestamp
+                msg['last_receive_time'] = monotonic()
                 msg["dlc"] = dlc
                 msg["data"] = data
                 msg["is_dbc"] = is_dbc
+                msg["dbc_name"] = dbc_name or ""
                 msg["decoded"] = decoded or {}
             
 
@@ -107,6 +112,23 @@ class CANData:
     def get_trace_snapshot(self):
         with self.lock:
             return list(self.msg_log)
+    
+    def get_signal_plot(self):
+        with self.lock:
+            return {
+                name: {
+                    "time": list(data["time"]),
+                    "value": list(data["value"])
+                }
+                for name, data in self.signal_plot.items()}
+    
+    def reset(self):
+        self.messages.clear()
+        self.msg_log.clear()
+        self.signals.clear()
+        self.signal_plot.clear()
+    
+
 
 
 
@@ -142,7 +164,7 @@ class CANScanner:
 
 
             is_dbc = False if name is None else True
-            self.data_store.update_message(msg.arbitration_id, msg.data, msg.dlc, t, is_dbc, decoded)
+            self.data_store.update_message(msg.arbitration_id, msg.data, msg.dlc, t, name, is_dbc, decoded)
 
             if decoded:
                 for sig, val in decoded.items():
@@ -218,6 +240,7 @@ class CANManager:
         self.thread = None
         self.driver = None
         self.scanner = None
+        self.can_data.reset()
 
 
         

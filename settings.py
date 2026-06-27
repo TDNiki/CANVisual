@@ -1,0 +1,1 @@
+MSG_TIMEOUT = 3 # MSG_TIMEOUT * frequency
