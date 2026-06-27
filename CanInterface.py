@@ -5,7 +5,7 @@ import cantools
 from collections import defaultdict
 from can.interfaces.vector import VectorBus
 from collections import deque # bufer, max = auto deletion first
-from time import monotonic 
+
 
 class CANDriver:
     def __init__(self, interface, channel, bitrate=500000, app_name = None):
@@ -76,7 +76,6 @@ class CANData:
                 self.messages[msg_id] = {
                     "count": 0,
                     "receive_time": receive_msg_timestamp,
-                    "last_receive_time": monotonic(),
                     "frequency": 0,
                     "dlc": 0,
                     "data": None,
@@ -92,7 +91,6 @@ class CANData:
                 msg["count"] += 1
                 msg["frequency"] = receive_msg_timestamp - msg["receive_time"]
                 msg['receive_time'] = receive_msg_timestamp
-                msg['last_receive_time'] = monotonic()
                 msg["dlc"] = dlc
                 msg["data"] = data
                 msg["is_dbc"] = is_dbc

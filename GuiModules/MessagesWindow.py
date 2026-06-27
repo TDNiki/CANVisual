@@ -3,7 +3,6 @@ import dearpygui.dearpygui as dpg
 from BaseWindow import BaseWindow
 from CanInterface import CANData
 from datetime import datetime
-from time import monotonic
 
 
 def end_point(): ...
