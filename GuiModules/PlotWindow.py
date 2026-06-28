@@ -24,13 +24,29 @@ class PlotLogic:
     def __init__(self, data, event_hander):
         self.data = data
         self.subplots = list()
-        self.signal_locations = {}
+        self.signal_locations = {} #signal id: subplot index
+        self.signal_theme = {} # signal id: theme
     
         self.event_hander = event_hander
         self.__set_up_event()
     
     def __set_up_event(self):
         self.event_hander.sub("on_combo_plot_change", self.on_signal_change)
+        self.event_hander.sub("on_plot_color_change", self.on_color_change)
+
+    def on_color_change(self, sender: str | None, color, signal_id):
+        if sender and not dpg.is_item_activated(sender): #обработка от спама вызовов
+            return
+        if signal_id not in self.signal_theme: return
+
+        color = [int(color[i] * 255) for i in range(len(color) - 1)]
+
+        dpg.delete_item(self.signal_theme[signal_id], children_only=True)
+
+        with dpg.theme_component(parent=self.signal_theme[signal_id]):
+            dpg.add_theme_color(dpg.mvPlotCol_Line, color, category=dpg.mvThemeCat_Plots)
+
+        #dpg.bind_item_theme(f"plot_{msg_id}_{signal_name}", self.signal_theme[signal_id])
 
 
 
@@ -98,7 +114,7 @@ class PlotLogic:
                     subplot.y_axis = dpg.add_plot_axis(
                         dpg.mvYAxis,
                         tag=f"y_axis_{i}",
-                        drop_callback=self.drop_signal,
+                        # drop_callback=self.drop_signal,
                         payload_type="plotting"
                     )
 
@@ -124,6 +140,7 @@ class PlotLogic:
         msg_id, signal_name = signal
 
         dpg.delete_item(f"plot_{msg_id}_{signal_name}")
+        self.__delete_plot_theme(signal)
 
     def add_signal(self, signal: tuple[str, str], subplot_index):
 
@@ -142,8 +159,26 @@ class PlotLogic:
             [],
             label= f"{signal_name} ({msg_id:08X})",
             parent=subplot.y_axis,
-            tag=f"plot_{msg_id}_{signal_name}"
+            tag=f"plot_{msg_id}_{signal_name}",
         )
+
+        self.__create_plot_theme(signal)
+        
+        
+
+    def __create_plot_theme(self, signal_id):
+        msg_id, signal_name = signal_id
+
+        with dpg.theme() as theme:
+            with dpg.theme_component(parent=theme):
+                dpg.add_theme_color(dpg.mvPlotCol_Line, dpg.get_value(f"{msg_id}_{signal_name}_colore"), category=dpg.mvThemeCat_Plots)
+        
+        dpg.bind_item_theme(f"plot_{msg_id}_{signal_name}", theme)
+        self.signal_theme[signal_id] = theme
+    
+    def __delete_plot_theme(self, signal_id):
+        dpg.delete_item(self.signal_theme[signal_id])
+        self.signal_theme.pop(signal_id)
 
         
     def move_signal(self, signal: tuple[str, str], new_subplot_index):
@@ -151,11 +186,11 @@ class PlotLogic:
         self.remove_signal(signal)
         self.add_signal(signal, new_subplot_index)
 
-    def drop_signal(self, sender, app_data):
-        signal = app_data
-        subplot_index = next( i for i, subplot in enumerate(self.subplots) if subplot.y_axis == sender)
+    # def drop_signal(self, sender, app_data):
+    #     signal = app_data
+    #     subplot_index = next( i for i, subplot in enumerate(self.subplots) if subplot.y_axis == sender)
 
-        self.add_signal(signal, subplot_index)
+    #     self.add_signal(signal, subplot_index)
 
     def set_rows(self, rows):
         self.rows = rows

@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from BaseWindow import BaseWindow
 from CanInterface import CANData
+from settings import DEFAULT_PLOT_COLOR
 
 def end_point():return
 
@@ -59,23 +60,25 @@ class SignalLogic:
     
     def __check_signals(self, msg_id, data):
 
+        if not dpg.get_value(f"{self.__msg_header_tag}_{msg_id}"): return #лишний раз не будет обновлять данные, если они закрыты
+        
         for sig, value in data['decoded'].items():
 
             try:
 
                 if dpg.does_item_exist(f"{msg_id}_{sig}"):
                     dpg.set_value(f"{msg_id}_{sig}", f"{value:.2f}")
-                    if len(dpg.get_item_configuration(f"{msg_id}_{sig}_combo")['items']) != self.__plot_count: 
+                    if len(dpg.get_item_configuration(f"{msg_id}_{sig}_combo")['items']) - 1 != self.__plot_count: # -1 : offset bcs default value
                         dpg.configure_item(f"{msg_id}_{sig}_combo", items = [i for i in range(self.__plot_count)] + ["-"])
                 else:
                     with dpg.table_row(parent = f"{self.__signal_table_tag}_{msg_id}"):
                         combo_init_items = ["-"] + [i for i in range(self.__plot_count)]
                         combo = dpg.add_combo(combo_init_items, width=-1, tag = f"{msg_id}_{sig}_combo", callback = lambda sender, plot_id, signal_name: self.event_hander.invoke("on_combo_plot_change", sender, plot_id, signal_name), user_data=(msg_id, sig))
                         dpg.set_value(combo, combo_init_items[0])
-                        dpg.add_color_edit(no_alpha=True, no_inputs=True, no_label=True, no_drag_drop=True, no_options=True, no_tooltip=True, alpha_bar=True, default_value = (24, 81, 232), width=-1)
-                        ui_obj = dpg.add_text(sig)
+                        dpg.add_color_edit(tag = f"{msg_id}_{sig}_colore",no_alpha=True, no_inputs=True, no_label=True, no_drag_drop=True, no_options=True, no_tooltip=True, alpha_bar=True, default_value = DEFAULT_PLOT_COLOR, width=-1, callback = lambda sender, data, signal_id: self.event_hander.invoke("on_plot_color_change", sender, data, signal_id), user_data=(msg_id, sig))
+                        dpg.add_text(sig)
                         dpg.add_text(f"{value:.2f}", tag = f"{msg_id}_{sig}", color=(150, 200, 255, 255))
-                        dpg.add_drag_payload(parent=ui_obj, drag_data=sig, payload_type="plotting")
+                        #dpg.add_drag_payload(parent=ui_obj, drag_data=sig, payload_type="plotting")
 
             except Exception as error: 
                 print(error)
