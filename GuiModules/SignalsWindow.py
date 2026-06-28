@@ -12,13 +12,25 @@ class SignalLogic:
 
     __msg_header_tag = "msginsigtab"
     __signal_table_tag = "sigtab"
-    plot_logic = None
+    __plot_count = 1
 
-    def __init__(self, data : CANData, signal_window_tag : str):
+    def __init__(self, data : CANData, signal_window_tag : str, event_hander):
         self.data = data
         self.__signal_window_tag = signal_window_tag
+        self.event_hander = event_hander
+        self.__set_up_event()
+    
+    def __set_up_event(self):
+        self.event_hander.sub("on_plot_size_change", self.__set_plot_count)
+        self.event_hander.sub("on_signals_move", self.__on_signal_move)
 
+    def __set_plot_count(self, count):
+        self.__plot_count = count
+    
+    def __on_signal_move(self, signal_id, plot_id):
 
+        msg_id, sig = signal_id
+        dpg.set_value(f"{msg_id}_{sig}_combo", plot_id)
 
     def update(self): 
 
@@ -35,9 +47,9 @@ class SignalLogic:
 
             self.__check_signals(id, data)
 
-    def __create_msg(self, id: str, data: dict):
+    def __create_msg(self, id: str | int, data: dict):
 
-        with dpg.collapsing_header(parent=self.__signal_window_tag, label=data.get("dbc_name", str(id)), tag=f"{self.__msg_header_tag}_{id}"):
+        with dpg.collapsing_header(parent=self.__signal_window_tag, label=data.get("dbc_name", f"{id:08X}") + f" ({id:08X})", tag=f"{self.__msg_header_tag}_{id}"):
             with dpg.table(resizable=True, policy=dpg.mvTable_SizingStretchProp, borders_innerH=True, 
                         borders_outerH=False, borders_innerV=True, borders_outerV=False, row_background=False, no_keep_columns_visible=True, tag=f"{self.__signal_table_tag}_{id}"):
                     dpg.add_table_column(label='ID графика', init_width_or_weight=0.2)
@@ -53,13 +65,12 @@ class SignalLogic:
 
                 if dpg.does_item_exist(f"{msg_id}_{sig}"):
                     dpg.set_value(f"{msg_id}_{sig}", f"{value:.2f}")
-                    plots_count = self.plot_logic.count_subplots()
-                    if len(dpg.get_item_configuration(f"{msg_id}_{sig}_combo")) != plots_count: 
-                        dpg.configure_item(f"{msg_id}_{sig}_combo", items = [i for i in range(plots_count)] + ["-"], default = "-")
+                    if len(dpg.get_item_configuration(f"{msg_id}_{sig}_combo")['items']) != self.__plot_count: 
+                        dpg.configure_item(f"{msg_id}_{sig}_combo", items = [i for i in range(self.__plot_count)] + ["-"])
                 else:
                     with dpg.table_row(parent = f"{self.__signal_table_tag}_{msg_id}"):
-                        combo_init_items = ["-"]
-                        combo = dpg.add_combo(combo_init_items, width=-1, tag = f"{msg_id}_{sig}_combo", callback = self.plot_logic.on_signal_change, user_data=sig)
+                        combo_init_items = ["-"] + [i for i in range(self.__plot_count)]
+                        combo = dpg.add_combo(combo_init_items, width=-1, tag = f"{msg_id}_{sig}_combo", callback = lambda sender, plot_id, signal_name: self.event_hander.invoke("on_combo_plot_change", sender, plot_id, signal_name), user_data=(msg_id, sig))
                         dpg.set_value(combo, combo_init_items[0])
                         dpg.add_color_edit(no_alpha=True, no_inputs=True, no_label=True, no_drag_drop=True, no_options=True, no_tooltip=True, alpha_bar=True, default_value = (24, 81, 232), width=-1)
                         ui_obj = dpg.add_text(sig)
@@ -88,7 +99,7 @@ class SignalsWindow(BaseWindow):
 
     @classmethod
     def setup(cls, *args, **kwargs):
-        cls.logic = SignalLogic(kwargs['data'], cls.tag)
+        cls.logic = SignalLogic(kwargs['data'], cls.tag, kwargs['event_handler'])
         with dpg.window(
             tag=cls.tag,
             label=cls.title,

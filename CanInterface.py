@@ -98,10 +98,12 @@ class CANData:
                 msg["decoded"] = decoded or {}
             
 
-    def update_signal(self, name, t, value):
+    def update_signal(self, msg_id, name, t, value):
+        key = (msg_id, name)
+
         with self.lock:
-            self.signal_plot[name]["time"].append(t)
-            self.signal_plot[name]["value"].append(value)
+            self.signal_plot[key]["time"].append(t)
+            self.signal_plot[key]["value"].append(value)
 
     def get_messages_snapshot(self):
         with self.lock:
@@ -166,7 +168,7 @@ class CANScanner:
 
             if decoded:
                 for sig, val in decoded.items():
-                    self.data_store.update_signal(sig, t - self.init_time, val)
+                    self.data_store.update_signal(msg.arbitration_id, sig, t - self.init_time, val)
 
     def stop(self):
         self.stop_event.set()

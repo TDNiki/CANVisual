@@ -107,10 +107,10 @@ class MessagesWindow(BaseWindow):
                             freeze_rows=1, freeze_columns=1,scrollY=True, scrollX=True, height=-1):
                     
                     dpg.add_table_column(label='ID',width_fixed=True)
-                    dpg.add_table_column(label='Count',width_fixed=True)
-                    dpg.add_table_column(label='Rate',width_fixed=True)
+                    dpg.add_table_column(label='Кол-во сообщений',width_fixed=True)
+                    dpg.add_table_column(label='Частота',width_fixed=True)
                     dpg.add_table_column(label='DLC',width_fixed=True)
-                    dpg.add_table_column(label='Data (Hex)',width_stretch=True, init_width_or_weight=0.0)
+                    dpg.add_table_column(label='Данные (Hex)',width_stretch=True, init_width_or_weight=0.0)
 
             with dpg.tab(label="Трассировка"):
                 dpg.add_checkbox(label="Отслеживание",callback=cls.logic.follow_trace)
@@ -118,10 +118,10 @@ class MessagesWindow(BaseWindow):
                 with dpg.table(header_row=True, resizable=True, policy=dpg.mvTable_SizingFixedFit, borders_innerH=True, borders_outerH=True, 
                             borders_innerV=True, borders_outerV=True, row_background=False, tag=cls.__msg_trace_tag,freeze_rows=1, freeze_columns=1,
                             scrollY=True, scrollX=True, height=-1):
-                    dpg.add_table_column(label='Timestamp',width_fixed=True)
+                    dpg.add_table_column(label='Время',width_fixed=True)
                     dpg.add_table_column(label='ID',width_fixed=True)
                     dpg.add_table_column(label='DLC',width_fixed=True)
-                    dpg.add_table_column(label='Data (Hex)',width_stretch=True, init_width_or_weight=0.0)
+                    dpg.add_table_column(label='Данные (Hex)',width_stretch=True, init_width_or_weight=0.0)
 
     @classmethod
     def update(cls):

@@ -21,12 +21,17 @@ class PlotLogic:
     window_seconds = 10
     auto_scroll = False
 
-    def __init__(self, data):
+    def __init__(self, data, event_hander):
         self.data = data
         self.subplots = list()
         self.signal_locations = {}
+    
+        self.event_hander = event_hander
+        self.__set_up_event()
+    
+    def __set_up_event(self):
+        self.event_hander.sub("on_combo_plot_change", self.on_signal_change)
 
-    def count_subplots(self): return len(self.subplots)
 
 
     def update(self):
@@ -38,7 +43,8 @@ class PlotLogic:
             try:
                 x = data[signal]["time"]
                 y = data[signal]["value"]
-                dpg.set_value(f"plot_{signal}", [x, y])
+                msg_id, signal_name = signal
+                dpg.set_value(f"plot_{msg_id}_{signal_name}", [x, y])
 
                 if len(x) > 0:
                     max_time = max(max_time, x[-1])
@@ -80,7 +86,7 @@ class PlotLogic:
 
                 subplot = Subplot(i)
 
-                with dpg.plot(label = f"№{i}"):
+                with dpg.plot(label = f"График №{i}"):
 
                     dpg.add_plot_legend()
 
@@ -105,6 +111,8 @@ class PlotLogic:
             subplot_index = min(subplot_index, len(self.subplots) - 1)
 
             self.add_signal(signal, subplot_index)
+            self.event_hander.invoke("on_signals_move", signal, subplot_index)
+        
 
     def remove_signal(self, signal):
 
@@ -113,9 +121,11 @@ class PlotLogic:
         subplot_index = self.signal_locations.pop(signal)
         self.subplots[subplot_index].signals.remove(signal)
 
-        dpg.delete_item(f"plot_{signal}")
+        msg_id, signal_name = signal
 
-    def add_signal(self, signal, subplot_index):
+        dpg.delete_item(f"plot_{msg_id}_{signal_name}")
+
+    def add_signal(self, signal: tuple[str, str], subplot_index):
 
         if signal in self.signal_locations:
             return
@@ -125,15 +135,18 @@ class PlotLogic:
         subplot.signals.append(signal)
         self.signal_locations[signal] = subplot_index
 
+        msg_id, signal_name = signal
+
         dpg.add_line_series(
             [],
             [],
-            label=signal,
+            label= f"{signal_name} ({msg_id:08X})",
             parent=subplot.y_axis,
-            tag=f"plot_{signal}"
+            tag=f"plot_{msg_id}_{signal_name}"
         )
 
-    def move_signal(self, signal, new_subplot_index):
+        
+    def move_signal(self, signal: tuple[str, str], new_subplot_index):
 
         self.remove_signal(signal)
         self.add_signal(signal, new_subplot_index)
@@ -147,11 +160,13 @@ class PlotLogic:
     def set_rows(self, rows):
         self.rows = rows
         self.rebuild()
+        self.event_hander.invoke("on_plot_size_change", self.cols  * self.rows)
 
 
     def set_columns(self, columns):
         self.cols = columns
         self.rebuild()
+        self.event_hander.invoke("on_plot_size_change", self.cols  * self.rows)
     
     def fit_x(self):
 
@@ -170,8 +185,10 @@ class PlotLogic:
     def __reset_data(self):
         self.signal_locations.clear()
 
-    def on_signal_change(self, sender, plot_index:str, signal_name):
-        if not plot_index.isdigit(): self.remove_signal(signal_name)
+    def on_signal_change(self, sender, plot_index:str, signal_name: tuple[str, str]):
+        if not plot_index.isdigit(): 
+            self.remove_signal(signal_name)
+            return
         if signal_name not in self.signal_locations: self.add_signal(signal_name, int(plot_index))
         else: self.move_signal(signal_name, int(plot_index))
 
@@ -190,7 +207,7 @@ class PlotWindow(BaseWindow):
 
     @classmethod
     def setup(cls, *args, **kwargs):
-        cls.logic = PlotLogic(kwargs['data']);
+        cls.logic = PlotLogic(kwargs['data'], kwargs['event_handler']);
         with dpg.window(
             tag=cls.tag,
             label=cls.title,
@@ -204,10 +221,6 @@ class PlotWindow(BaseWindow):
 
                     with dpg.menu(label="Настройка сетки"):
 
-                        dpg.add_text(
-                            "При удалении сетки, графики удалятся",
-                            color=(255, 255, 0, 255)
-                        )
 
                         dpg.add_input_int(
                             label="Строки",
@@ -229,8 +242,8 @@ class PlotWindow(BaseWindow):
                             callback=lambda _, a: cls.logic.set_columns(a)
                         )
             with dpg.group(horizontal=True):
-                dpg.add_button(label="Fit X", callback=lambda: cls.logic.fit_x())
-                dpg.add_button(label="Fit Y", callback=lambda: cls.logic.fit_y())
+                dpg.add_button(label="Подгон X", callback=lambda: cls.logic.fit_x())
+                dpg.add_button(label="Подгон Y", callback=lambda: cls.logic.fit_y())
                 dpg.add_checkbox(tag="auto_x", label="Отслеживание по времени", callback=cls.logic.set_auto_scroll_x)
 
             cls.logic.rebuild()

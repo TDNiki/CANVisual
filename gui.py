@@ -1,15 +1,5 @@
 import dearpygui.dearpygui as dpg
-from can_interface import send_can_message, available_signals, plot_signals, signal_data
-from utils import set_update_interval
-from math import sin
 import time
-
-from gui_module_recieve import recieve_window
-from gui_module_signals import signal_window
-from gui_module_plot import plot_window
-from gui_modul_connect import bus_window
-from gui_modul_dbc import dbc_window
-from gui_module_ZF import ZF_window
 
 from GuiModules.BusConnectionWindow import BusConnectionWindow
 from GuiModules.DBCConnectionWindow import DBCConnectionWindow
@@ -17,11 +7,13 @@ from GuiModules.MessagesWindow import MessagesWindow
 from GuiModules.SignalsWindow import SignalsWindow
 from GuiModules.PlotWindow import PlotWindow
 from CanInterface import CANData
-
+from EventHandler import EventHandler
 
 class AppLogic:
 
     data = CANData()
+    event_handler = EventHandler()
+
 
 class AppGui:
     """"""
@@ -107,9 +99,8 @@ class AppGui:
         
 
         for sub_gui in self.windows:
-           sub_gui.setup(data = self.logic.data)
+           sub_gui.setup(data = self.logic.data, event_handler = self.logic.event_handler)
         
-        SignalsWindow.logic.plot_logic = PlotWindow.logic # костыль, ну что поделать
         
         self.__set_up_font()
         self.__set_up_theme()
