@@ -31,6 +31,8 @@ class AppGui:
         self.__last_update_time = time.time()
         self.update_interval = update_interval
 
+        with dpg.value_registry(tag="shared_value_registr"): pass #Для синхронизации данных
+
         
     @staticmethod
     def __set_up_font():

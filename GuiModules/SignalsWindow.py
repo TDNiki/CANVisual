@@ -26,6 +26,8 @@ class SignalLogic:
         self.event_hander.sub("on_signals_move", self.__on_signal_move)
 
 
+
+
     def __set_plot_count(self, count):
         self.__plot_count = count
     
@@ -76,7 +78,8 @@ class SignalLogic:
                         combo_init_items = ["-"] + [i for i in range(self.__plot_count)]
                         combo = dpg.add_combo(combo_init_items, width=-1, tag = f"{msg_id}_{sig}_combo", callback = lambda sender, plot_id, signal_name: self.event_hander.invoke("on_combo_plot_change", sender, plot_id, signal_name), user_data=(msg_id, sig))
                         dpg.set_value(combo, combo_init_items[0])
-                        dpg.add_color_edit(tag = f"{msg_id}_{sig}_colore",no_alpha=True, no_inputs=True, no_label=True, no_drag_drop=True, no_options=True, no_tooltip=True, alpha_bar=True, default_value = DEFAULT_PLOT_COLOR, width=-1, callback = lambda sender, data, signal_id: self.event_hander.invoke("on_plot_color_change", sender, data, signal_id), user_data=(msg_id, sig))
+                        dpg.add_color_value(default_value=DEFAULT_PLOT_COLOR, parent = "shared_value_registr", tag = f"{msg_id}_{sig}_color")
+                        dpg.add_color_edit(tag = f"{msg_id}_{sig}_colore",no_alpha=True, no_inputs=True, no_label=True, no_drag_drop=True, no_options=True, no_tooltip=True, alpha_bar=True, source=f"{msg_id}_{sig}_color", width=-1, callback = lambda sender, data, signal_id: self.event_hander.invoke("on_plot_color_change", sender, data, signal_id), user_data=(msg_id, sig))
                         dpg.add_text(sig)
                         dpg.add_text(f"{value:.2f}", tag = f"{msg_id}_{sig}", color=(150, 200, 255, 255))
                         #dpg.add_drag_payload(parent=ui_obj, drag_data=sig, payload_type="plotting")
@@ -111,6 +114,7 @@ class SignalsWindow(BaseWindow):
             no_resize=True,
             no_collapse=True,
             no_close=True,
-        ): pass
+        ): 
+            ...
 
 

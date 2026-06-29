@@ -4,7 +4,7 @@ from BaseWindow import BaseWindow
 
 from settings import (
     MAX_PLOTS_COUNT,
-    MIN_PLOTS_COUNT
+    MIN_PLOTS_COUNT,
 )
 
 class Subplot:
@@ -40,6 +40,8 @@ class PlotLogic:
         if sender and not dpg.is_item_activated(sender): #обработка от спама вызовов
             return
         if signal_id not in self.signal_theme: return
+
+        print(sender, color, signal_id )
 
         color = [int(color[i] * 255) for i in range(len(color) - 1)]
 
@@ -164,13 +166,23 @@ class PlotLogic:
             parent=subplot.y_axis,
             tag=f"plot_{msg_id}_{signal_name}",
         )
-        dpg.add_button(label="Удалить", parent=line, callback=lambda : self.remove_signal(signal)) # можно было отдельный ивент создать, но раз уж есть похожий зачем память тратить
+
+        self.__add_modals_settings(signal, line)
 
         self.__create_plot_theme(signal)
 
         self.event_hander.invoke("on_signals_move", signal, subplot_index)
         
-    
+    def __add_modals_settings(self, signal, parent):
+
+        msg_id, signal_name = signal
+
+        dpg.add_button(label="Удалить", parent=parent, callback=lambda : self.remove_signal(signal)) # можно было отдельный ивент создать, но раз уж есть похожий зачем память тратить
+
+        with dpg.group(parent=parent, horizontal=False):
+            dpg.add_text("Цвет: ")
+            dpg.add_color_edit(label = "Цвет линии", source=f"{msg_id}_{signal_name}_color", parent=parent, no_alpha=True, no_inputs=True, no_label=True, no_drag_drop=True, no_options=True, no_tooltip=True, alpha_bar=True, width=-1, callback = lambda sender, data, signal_id: self.on_color_change(sender, data, signal_id), user_data = (signal))
+
 
     def __create_plot_theme(self, signal_id):
         msg_id, signal_name = signal_id
