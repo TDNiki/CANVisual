@@ -2,7 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from BaseWindow import BaseWindow
 from CanInterface import CANData
-from settings import DEFAULT_PLOT_COLOR
+from settings import DEFAULT_PLOT_COLOR, MIN_PLOTS_COUNT
 
 def end_point():return
 
@@ -13,7 +13,7 @@ class SignalLogic:
 
     __msg_header_tag = "msginsigtab"
     __signal_table_tag = "sigtab"
-    __plot_count = 1
+    __plot_count = MIN_PLOTS_COUNT
 
     def __init__(self, data : CANData, signal_window_tag : str, event_hander):
         self.data = data
@@ -24,6 +24,7 @@ class SignalLogic:
     def __set_up_event(self):
         self.event_hander.sub("on_plot_size_change", self.__set_plot_count)
         self.event_hander.sub("on_signals_move", self.__on_signal_move)
+
 
     def __set_plot_count(self, count):
         self.__plot_count = count

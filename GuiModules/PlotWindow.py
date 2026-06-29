@@ -129,7 +129,7 @@ class PlotLogic:
             subplot_index = min(subplot_index, len(self.subplots) - 1)
 
             self.add_signal(signal, subplot_index)
-            self.event_hander.invoke("on_signals_move", signal, subplot_index)
+            
         
 
     def remove_signal(self, signal):
@@ -143,6 +143,7 @@ class PlotLogic:
 
         dpg.delete_item(f"plot_{msg_id}_{signal_name}")
         self.__delete_plot_theme(signal)
+        self.event_hander.invoke("on_signals_move", signal, "-")
 
     def add_signal(self, signal: tuple[str, str], subplot_index):
 
@@ -156,17 +157,20 @@ class PlotLogic:
 
         msg_id, signal_name = signal
 
-        dpg.add_line_series(
+        line = dpg.add_line_series(
             [],
             [],
             label= f"{signal_name} ({msg_id:08X})",
             parent=subplot.y_axis,
             tag=f"plot_{msg_id}_{signal_name}",
         )
+        dpg.add_button(label="Удалить", parent=line, callback=lambda : self.remove_signal(signal)) # можно было отдельный ивент создать, но раз уж есть похожий зачем память тратить
 
         self.__create_plot_theme(signal)
+
+        self.event_hander.invoke("on_signals_move", signal, subplot_index)
         
-        
+    
 
     def __create_plot_theme(self, signal_id):
         msg_id, signal_name = signal_id
