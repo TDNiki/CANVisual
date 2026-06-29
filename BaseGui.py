@@ -1,5 +1,6 @@
 import dearpygui.dearpygui as dpg
 import time
+import ctypes
 
 from GuiModules.BusConnectionWindow import BusConnectionWindow
 from GuiModules.DBCConnectionWindow import DBCConnectionWindow
@@ -90,8 +91,9 @@ class AppGui:
     def __setup_gui(self):     
 
         dpg.create_context()
-        dpg.create_viewport(title="CAN GUI", width = 1600, height=900, min_width=1200, min_height=800)
+        dpg.create_viewport(title="CAN GUI", min_width=1200, min_height=800)
         dpg.setup_dearpygui()
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
         dpg.show_viewport()
         
         

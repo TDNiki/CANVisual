@@ -2,8 +2,10 @@ import dearpygui.dearpygui as dpg
 
 from BaseWindow import BaseWindow
 
-MIN_PLOTS_COUNT = 1
-MAX_PLOTS_COUNT = 5
+from settings import (
+    MAX_PLOTS_COUNT,
+    MIN_PLOTS_COUNT
+)
 
 class Subplot:
 
@@ -216,6 +218,8 @@ class PlotLogic:
 
     def set_auto_scroll_x(self, sender, is_checked):
         self.auto_scroll = is_checked
+
+        if not is_checked: dpg.set_axis_limits_auto(self.subplots[0].x_axis)
     
     def __reset_data(self):
         self.signal_locations.clear()

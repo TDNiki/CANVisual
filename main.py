@@ -1,5 +1,4 @@
-from threading import Thread
-from gui import AppGui
+from BaseGui import AppGui
 
 def main():
     apps_gui = AppGui()
