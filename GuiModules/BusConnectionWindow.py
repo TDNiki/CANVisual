@@ -65,6 +65,7 @@ class BusConnectionWindow(BaseWindow):
     __connect_button_tag = 'connect_bus'
     __disconnect_button_tag = 'disconnect_bus'
     __interface_combo_tag = 'device_combo'
+    __bitrate_combo_tag = "bitrate_combo"
 
     @classmethod
     def setup(cls, *args, **kwargs):
@@ -100,14 +101,14 @@ class BusConnectionWindow(BaseWindow):
                             dpg.add_combo(
                                 ["250", "500"],
                                 default_value="500",
-                                tag="bitrate_combo",
+                                tag=cls.__bitrate_combo_tag,
                                 width=-1
                             )
 
                             dpg.add_button(
                                 label = "Подключить",
                                 width = -1,
-                                callback = lambda: cls.logic.on_connect_click(cls.__interface_combo_tag, сды),
+                                callback = lambda: cls.logic.on_connect_click(cls.__interface_combo_tag, cls.__bitrate_combo_tag),
                                 tag= cls.__connect_button_tag
                             )
                             dpg.add_button(

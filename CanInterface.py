@@ -203,8 +203,9 @@ class CANManager:
 
         if interface == "vector":
             for config in self.get_configs():
-                if config['interface'] == "vector":
-                    VectorBus.set_application_config(app_name='python-can', app_channel=int(config["channel"]), **config)
+                if config['interface'] == "vector" and config['channel'] == channel:
+                    VectorBus.set_application_config(app_name='python-can', app_channel=channel, **config)
+                    break
 
             self.driver = CANDriver(interface = interface, channel = channel, bitrate = bitrate, app_name='python-can')
         
