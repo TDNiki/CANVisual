@@ -22,11 +22,12 @@ class BusLogic:
             interfaces.append(f"{config['interface']} : {config['channel']}")
         return interfaces
     
-    def on_connect_click(self, combo_tag: str):
+    def on_connect_click(self, combo_interface_tag: str, bitrate_combo_tag: str):
 
         try:
-            interface, channel = dpg.get_value(combo_tag).split(" : ") # format "vector : chnannel"
-            self.can.connect(interface, int(channel), dbc_path=self.dbc_path)
+            interface, channel = dpg.get_value(combo_interface_tag).split(" : ") # format "vector : chnannel"
+            bitrate = int(dpg.get_value(bitrate_combo_tag)) * 1000
+            self.can.connect(interface, int(channel), dbc_path=self.dbc_path, bitrate=bitrate)
             dpg.configure_item(self.con_button_tag, label = 'Подключен', enabled = False)
             dpg.configure_item(self.discon_button_tag, label = 'Отключить', enabled = True)
 
@@ -76,45 +77,48 @@ class BusConnectionWindow(BaseWindow):
             no_collapse=True,
             no_close=True,
         ):
+            with dpg.tab_bar():
+                with dpg.tab(label="Онлайн"):
+                    with dpg.table(
+                        header_row=False,
+                        borders_innerV=False,
+                        borders_innerH=False,
+                        resizable=False
+                    ):
+                        dpg.add_table_column(init_width_or_weight=0.1)
+                        dpg.add_table_column(init_width_or_weight=0.3)
+                        dpg.add_table_column(init_width_or_weight=0.2)
+                        dpg.add_table_column(init_width_or_weight=0.2)
+                        dpg.add_table_column(init_width_or_weight=0.2)
+                        
+                        with dpg.table_row():
+                            
+                            dpg.add_button(label="Найти", width=-1, callback = lambda: cls.logic.update_available_interfaces(cls.__interface_combo_tag))
 
-            with dpg.table(
-                header_row=False,
-                borders_innerV=False,
-                borders_innerH=False,
-                resizable=False
-            ):
-                dpg.add_table_column(init_width_or_weight=0.1)
-                dpg.add_table_column(init_width_or_weight=0.3)
-                dpg.add_table_column(init_width_or_weight=0.2)
-                dpg.add_table_column(init_width_or_weight=0.2)
-                dpg.add_table_column(init_width_or_weight=0.2)
-                
-                with dpg.table_row():
-                    
-                    dpg.add_button(label="Найти", width=-1, callback = lambda: cls.logic.update_available_interfaces(cls.__interface_combo_tag))
+                            dpg.add_combo(cls.logic.get_available_interfaces(), tag=cls.__interface_combo_tag, width=-1)
 
-                    dpg.add_combo(cls.logic.get_available_interfaces(), tag=cls.__interface_combo_tag, width=-1)
+                            dpg.add_combo(
+                                ["250", "500"],
+                                default_value="500",
+                                tag="bitrate_combo",
+                                width=-1
+                            )
 
-                    dpg.add_combo(
-                        ["250", "500"],
-                        default_value="500",
-                        tag="bitrate_combo",
-                        width=-1
-                    )
-
-                    dpg.add_button(
-                        label = "Подключить",
-                        width = -1,
-                        callback = lambda: cls.logic.on_connect_click(cls.__interface_combo_tag),
-                        tag= cls.__connect_button_tag
-                    )
-                    dpg.add_button(
-                        label = "Отключено",
-                        width = -1,
-                        callback = lambda: cls.logic.on_disconnect_click(),
-                        tag = cls.__disconnect_button_tag,
-                        enabled = False
-                    )
+                            dpg.add_button(
+                                label = "Подключить",
+                                width = -1,
+                                callback = lambda: cls.logic.on_connect_click(cls.__interface_combo_tag, сды),
+                                tag= cls.__connect_button_tag
+                            )
+                            dpg.add_button(
+                                label = "Отключено",
+                                width = -1,
+                                callback = lambda: cls.logic.on_disconnect_click(),
+                                tag = cls.__disconnect_button_tag,
+                                enabled = False
+                            )
+                with dpg.tab(label="Оффлайн"):
+                    ...
 
     @classmethod
     def update(cls):
