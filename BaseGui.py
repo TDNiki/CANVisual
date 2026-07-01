@@ -9,17 +9,16 @@ from GuiModules.SignalsWindow import SignalsWindow
 from GuiModules.PlotWindow import PlotWindow
 from CanInterface import CANData
 from EventHandler import EventHandler
+from settings import MAX_DATA_IN_RAM
 
 class AppLogic:
 
-    data = CANData()
+    data = CANData(plot_data_max_sec=MAX_DATA_IN_RAM)
     event_handler = EventHandler()
 
 
 class AppGui:
     """"""
-
-    #windows = [bus_window, recieve_window, dbc_window, signal_window, plot_window]
     
     windows = [BusConnectionWindow, DBCConnectionWindow, MessagesWindow, SignalsWindow, PlotWindow]
 

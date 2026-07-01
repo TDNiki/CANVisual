@@ -60,13 +60,16 @@ class DBCDecoder:
 class CANData:
 
 
-    def __init__(self, msg_log_max_size = 100, plot_data_max_size = 1000):
+    def __init__(self, msg_log_max_size = 100, plot_data_max_sec = 60):
+        """
+        Динамически формируем количество точек в зависимости от времени. То есть в оперативке будем хранить 60 секунд информации
+        """
         self.lock = threading.Lock()
-
+        self.__plot_data_max_sec = plot_data_max_sec
         self.messages = {}
         self.msg_log = deque(maxlen=msg_log_max_size)
         self.signals = defaultdict(list)
-        self.signal_plot = defaultdict(lambda: {"time": deque(maxlen=plot_data_max_size), "value": deque(maxlen=plot_data_max_size)})
+        self.signal_plot = defaultdict(lambda: {"time": deque(), "value": deque()})
 
     def update_message(self, msg_id, data, dlc, receive_msg_timestamp, dbc_name:str = None, is_dbc=False, decoded=None):
 
@@ -98,12 +101,18 @@ class CANData:
                 msg["decoded"] = decoded or {}
             
 
-    def update_signal(self, msg_id, name, t, value):
+    def update_signal(self, msg_id, name, time, value):
         key = (msg_id, name)
+        time_data = self.signal_plot[key]["time"]
+        value_data = self.signal_plot[key]["value"]
 
         with self.lock:
-            self.signal_plot[key]["time"].append(t)
-            self.signal_plot[key]["value"].append(value)
+            time_data.append(time)
+            value_data.append(value)
+
+            while time_data and (time - time_data[0]) > self.__plot_data_max_sec:
+                time_data.popleft()
+                value_data.popleft()
 
     def get_messages_snapshot(self):
         with self.lock:

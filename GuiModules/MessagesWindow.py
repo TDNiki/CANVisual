@@ -94,7 +94,7 @@ class MessagesWindow(BaseWindow):
             tag=cls.tag,
             label=cls.title,
             no_move=True,
-            no_resize=True,
+            no_resize=False,
             no_collapse=True,
             no_close=True,
         ):
