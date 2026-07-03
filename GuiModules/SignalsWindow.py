@@ -97,8 +97,6 @@ class SignalsWindow(BaseWindow):
 
     tag = "signals"
     title = "Сигналы"
-    size = (0.3, 0.45)
-    position = (0, 0.55)
     logic = None
 
 
@@ -107,13 +105,11 @@ class SignalsWindow(BaseWindow):
     @classmethod
     def setup(cls, *args, **kwargs):
         cls.logic = SignalLogic(kwargs['data'], cls.tag, kwargs['event_handler'])
-        with dpg.window(
+        with dpg.child_window(
             tag=cls.tag,
             label=cls.title,
-            no_move=True,
-            no_resize=True,
-            no_collapse=True,
-            no_close=True,
+            height=kwargs['height'],
+            width=kwargs['width']
         ): 
             ...
 

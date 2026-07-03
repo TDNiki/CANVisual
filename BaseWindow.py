@@ -2,8 +2,6 @@ class BaseWindow:
 
     tag = None
     title = ""
-    size = (0, 0)
-    position = (0, 0)
     data = None
 
     @classmethod
@@ -19,4 +17,4 @@ class BaseWindow:
         """params: The current size of the application window
         \n :RETURNS: updated window child sizes
         """
-        return (width * cls.size[0], height * cls.size[1], width * cls.position[0], height * cls.position[1])
+        return (int(width * cls.size[0]), int(height * cls.size[1]), int(width * cls.position[0]), int(height * cls.position[1]))

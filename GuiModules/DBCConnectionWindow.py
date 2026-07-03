@@ -3,7 +3,8 @@ import dearpygui.dearpygui as dpg
 from BaseWindow import BaseWindow
 from GuiModules.BusConnectionWindow import BusConnectionWindow
 
-def end_point():return
+from settings import FILE_EXT_COLOR
+
 
 class DBCLogic:
 
@@ -26,8 +27,6 @@ class DBCConnectionWindow(BaseWindow):
 
     tag = "dbc"
     title = "Окно подключения dbc"
-    size = (0.5, 0.1)
-    position = (0.5, 0)
     logic = None
 
     __dbc_connected_tag = "dbc_connected_status"
@@ -35,13 +34,11 @@ class DBCConnectionWindow(BaseWindow):
     @classmethod
     def setup(cls, *args, **kwargs):
         cls.logic = DBCLogic(cls.__dbc_connected_tag)
-        with dpg.window(
+        with dpg.child_window(
             tag=cls.tag,
             label=cls.title,
-            no_move=True,
-            no_resize=True,
-            no_collapse=True,
-            no_close=True,
+            height=kwargs['height'],
+            width=kwargs['width']
         ):
             with dpg.table(
                 header_row=False,
@@ -72,7 +69,7 @@ class DBCConnectionWindow(BaseWindow):
                 width=700,
                 height=400
             ):
-                dpg.add_file_extension(".dbc", color=[150, 200, 255, 255])
+                dpg.add_file_extension(".dbc", color=FILE_EXT_COLOR)
 
     @classmethod
     def update(cls):

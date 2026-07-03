@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from BaseWindow import BaseWindow
 from CanInterface import CANManager
+from settings import FILE_EXT_COLOR
 
 class BusLogic:
 
@@ -58,8 +59,6 @@ class BusConnectionWindow(BaseWindow):
 
     tag = "bus"
     title = "Окно подключения интерфейса"
-    size = (0.5, 0.1)
-    position = (0, 0)
     logic = None
 
     __connect_button_tag = 'connect_bus'
@@ -70,13 +69,11 @@ class BusConnectionWindow(BaseWindow):
     @classmethod
     def setup(cls, *args, **kwargs):
         cls.logic = BusLogic(kwargs['data'], cls.__connect_button_tag, cls.__disconnect_button_tag)
-        with dpg.window(
+        with dpg.child_window(
             tag=cls.tag,
             label=cls.title,
-            no_move=True,
-            no_resize=True,
-            no_collapse=True,
-            no_close=True,
+            height=kwargs['height'],
+            width=kwargs['width']
         ):
             with dpg.tab_bar():
                 with dpg.tab(label="Онлайн"):
@@ -86,8 +83,8 @@ class BusConnectionWindow(BaseWindow):
                         borders_innerH=False,
                         resizable=False
                     ):
-                        dpg.add_table_column(init_width_or_weight=0.1)
-                        dpg.add_table_column(init_width_or_weight=0.3)
+                        dpg.add_table_column(init_width_or_weight=0.2)
+                        dpg.add_table_column(init_width_or_weight=0.2)
                         dpg.add_table_column(init_width_or_weight=0.2)
                         dpg.add_table_column(init_width_or_weight=0.2)
                         dpg.add_table_column(init_width_or_weight=0.2)
@@ -119,7 +116,23 @@ class BusConnectionWindow(BaseWindow):
                                 enabled = False
                             )
                 with dpg.tab(label="Оффлайн"):
-                    ...
+                    with dpg.group():
+                        dpg.add_button(label = "Выбрать лог")
+                        dpg.add_text("Подключенный лог: отсутствует")
+                    with dpg.group():
+                        dpg.add_slider_float()
+                        dpg.add_slider_float()
+                        dpg.add_button(label = "отобразить")
+                    with dpg.file_dialog(
+                        label = "Выбрать BLF",
+                        directory_selector=False,
+                        show=False,
+                        tag=f"{cls.tag}_file_dialog_offline",
+                        file_count=1,
+                        width=700,
+                        height=400
+                    ):
+                        dpg.add_file_extension(".blf", color=FILE_EXT_COLOR)
 
     @classmethod
     def update(cls):

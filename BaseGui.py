@@ -11,21 +11,18 @@ from CanInterface import CANData
 from EventHandler import EventHandler
 from settings import MAX_DATA_IN_RAM
 
-class AppLogic:
-
-    data = CANData(plot_data_max_sec=MAX_DATA_IN_RAM)
-    event_handler = EventHandler()
 
 
 class AppGui:
     """"""
     
-    windows = [BusConnectionWindow, DBCConnectionWindow, MessagesWindow, SignalsWindow, PlotWindow]
+    windows = [BusConnectionWindow, DBCConnectionWindow, SignalsWindow, PlotWindow]
+    additional_windows = [MessagesWindow]
 
-
+    data = CANData(plot_data_max_sec=MAX_DATA_IN_RAM)
+    event_handler = EventHandler()
 
     def __init__(self, update_interval = 0.1):
-        self.logic = AppLogic()
         self.__setup_gui()
         self.__last_update_time = time.time()
         self.update_interval = update_interval
@@ -70,44 +67,39 @@ class AppGui:
 
         dpg.bind_theme(button_theme)
 
-        
-
-
-    def __on_resize(self, sender, app_data):
-        width = dpg.get_viewport_client_width()
-        height = dpg.get_viewport_client_height()
-
-        
-        for window_obj in self.windows:
-
-            w, h, x, y = window_obj.resize_window(width, height)
-            dpg.configure_item(
-                window_obj.tag,
-                width=w,
-                height=h,
-                pos=(x, y)
-            )
-
 
     def __setup_gui(self):     
 
         dpg.create_context()
+        
+        with dpg.window(tag = "main_window") as root:
+
+            with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchSame):
+                dpg.add_table_column(init_width_or_weight=0.3)
+                dpg.add_table_column(init_width_or_weight=0.7)
+
+                with dpg.table_row():
+                    BusConnectionWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=80)
+                    DBCConnectionWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=80)
+                with dpg.table_row(height=-1):
+                    SignalsWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=-1)
+                    PlotWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=-1)
+
+        
+        
+        with dpg.viewport_menu_bar():
+            with dpg.menu(label = "Дополнителные инструменты"):
+                for window in self.additional_windows:
+                    window.setup_menu_bar_intro(data = self.data, event_handler = self.event_handler)
+        
         dpg.create_viewport(title="CAN GUI", min_width=1200, min_height=800)
         dpg.setup_dearpygui()
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
         dpg.show_viewport()
-        
-        
-        
-        
-
-        for sub_gui in self.windows:
-           sub_gui.setup(data = self.logic.data, event_handler = self.logic.event_handler)
-        
+        dpg.set_primary_window(root, True)
         
         self.__set_up_font()
         self.__set_up_theme()
-        dpg.set_viewport_resize_callback(self.__on_resize)
 
 
 
@@ -121,8 +113,10 @@ class AppGui:
         current_time = time.time()
         if current_time - self.__last_update_time >= self.update_interval:  # Обновление интерфейса согласно частоте
             
-            for window in self.windows:
-                window.logic.update()
+            for window in self.windows + self.additional_windows:
+                try:
+                    window.logic.update()
+                except: pass
             
             self.__last_update_time = current_time
 

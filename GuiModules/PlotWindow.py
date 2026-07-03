@@ -78,11 +78,11 @@ class PlotLogic:
                 i_right = bisect_right(x, xmax)
                 x_view = x[i_left:i_right]
                 y_view = y[i_left:i_right]
-                view_points_count = int(width * POINTS_PER_PIXEL)
-                count_points = int(width * POINTS_PER_PIXEL)
+                count_points = int(width * POINTS_PER_PIXEL / ((xmax - xmin) / MIN_DISPLAY_RANGE ))
                 x_view, y_view = self.__min_max_decimate(x_view, y_view, count_points)
                 msg_id, signal_name = signal
                 dpg.set_value(f"plot_{msg_id}_{signal_name}", [x_view, y_view])
+                print(count_points, len(x_view))
 
                 if len(x) > 0:
                     max_time = max(max_time, x[-1])
@@ -314,19 +314,17 @@ class PlotWindow(BaseWindow):
 
     tag = "plot"
     title = "Визуализация данных"
-    size = (0.7, 0.9)
-    position = (0.3, 0.1)
+
 
     @classmethod
     def setup(cls, *args, **kwargs):
         cls.logic = PlotLogic(kwargs['data'], kwargs['event_handler'], cls.tag);
-        with dpg.window(
+        with dpg.child_window(
             tag=cls.tag,
             label=cls.title,
-            no_move=True,
-            no_resize=True,
-            no_collapse=True,
-            no_close=True,
+            height=kwargs['height'],
+            width=kwargs['width'],
+            menubar=True
         ):
             with dpg.menu_bar():
                 with dpg.menu(label="Настройки"):

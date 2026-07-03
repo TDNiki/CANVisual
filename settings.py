@@ -6,6 +6,9 @@ MIN_PLOTS_COUNT = 1
 MAX_PLOTS_COUNT = 5
 POINTS_PER_PIXEL = 1
 
+#File dialog settings
+FILE_EXT_COLOR = [150, 200, 255, 255]
+
 
 # Data settings
 MAX_DATA_IN_RAM = 120 # in sec; how much data will be stored in temporary memory that will be available for display on graphs

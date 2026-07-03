@@ -10,6 +10,7 @@ def end_point(): ...
 class MessagesLogic:
 
     __is_follow_trace = False
+    is_window_active = False
 
     def __init__(self, data: CANData, msg_table_tag, msg_trace_tag):
         self.data = data
@@ -59,8 +60,9 @@ class MessagesLogic:
         if self.__is_follow_trace: dpg.set_y_scroll(self.msg_trace_tag, -1)
     
     def update(self): 
-        self._update_rates()
-        self._update_track()
+        if self.is_window_active:
+            self._update_rates()    
+            self._update_track()
 
     def follow_trace(self, event_sender):
         """Callbck for trace auto scroll"""
@@ -80,12 +82,27 @@ class MessagesWindow(BaseWindow):
 
     tag = "msg"
     title = "Входящие соообщения"
-    size = (0.3, 0.45)
-    position = (0, 0.1)
 
     __msg_table_tag = 'ReceivedMessagesTable'
     __msg_trace_tag = 'ReceivedMessagesTrace'
 
+    @classmethod
+    def setup_menu_bar_intro(cls, *args, **kwargs):
+        """Class for additional class pre-setup"""
+        cls.setup(*args, **kwargs)
+        dpg.add_menu_item(label=cls.title, callback = cls.show_window)
+
+    @classmethod
+    def on_close_window_event(cls):
+        cls.logic.is_window_active = False
+
+    @classmethod
+    def show_window(cls):
+        if cls.logic.is_window_active: return
+        dpg.show_item(cls.tag)
+       
+            
+        cls.logic.is_window_active = True
 
     @classmethod
     def setup(cls, *args, **kwargs):
@@ -93,10 +110,10 @@ class MessagesWindow(BaseWindow):
         with dpg.window(
             tag=cls.tag,
             label=cls.title,
-            no_move=True,
-            no_resize=False,
-            no_collapse=True,
-            no_close=True,
+            on_close=cls.on_close_window_event,
+            show = False,
+            width=200,
+            height=300
         ):
            with dpg.tab_bar():
 
