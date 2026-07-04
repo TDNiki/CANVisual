@@ -1,8 +1,8 @@
 import dearpygui.dearpygui as dpg
 
 from BaseWindow import BaseWindow
-from bisect import bisect_left, bisect_right
 from math import ceil
+from numpy import searchsorted
 
 from settings import (
     MAX_PLOTS_COUNT,
@@ -50,7 +50,6 @@ class PlotLogic:
             return
         if signal_id not in self.signal_theme: return
 
-        print(sender, color, signal_id )
 
         color = [int(color[i] * 255) for i in range(len(color) - 1)]
 
@@ -68,29 +67,25 @@ class PlotLogic:
         max_time = 0
         xmin, xmax = dpg.get_axis_limits(self.subplots[0].x_axis)
         width, _ = dpg.get_item_rect_size(self.__plot_window_tag) # у subplot нету такого аттрибута
-        data = self.data.get_signal_plot()
-        for signal, _ in self.signal_locations.items():
-            try:
-                
-                x = data[signal]["time"]
-                y = data[signal]["value"]
-                i_left = bisect_left(x, xmin) # на базе бинарного поиска
-                i_right = bisect_right(x, xmax)
-                x_view = x[i_left:i_right]
-                y_view = y[i_left:i_right]
-                count_points = int(width * POINTS_PER_PIXEL / ((xmax - xmin) / MIN_DISPLAY_RANGE ))
-                x_view, y_view = self.__min_max_decimate(x_view, y_view, count_points)
-                msg_id, signal_name = signal
-                dpg.set_value(f"plot_{msg_id}_{signal_name}", [x_view, y_view])
-                print(count_points, len(x_view))
+        try:
+            data = self.data.get_signal_plot(self.signal_locations.keys())
+            for signal, _ in self.signal_locations.items():     
+                    x, y = data[signal]
+                    i_left = searchsorted(x, xmin) # на базе бинарного поиска
+                    i_right = searchsorted(x, xmax, "right")
+                    x_view = x[i_left:i_right]
+                    y_view = y[i_left:i_right]
+                    count_points = int(width * POINTS_PER_PIXEL / ((xmax - xmin) / MIN_DISPLAY_RANGE ))
+                    x_view, y_view = self.__min_max_decimate(x_view, y_view, count_points)
+                    msg_id, signal_name = signal
+                    dpg.set_value(f"plot_{msg_id}_{signal_name}", [x_view, y_view])
 
-                if len(x) > 0:
-                    max_time = max(max_time, x[-1])
-            except KeyError:
-                self.__reset_data()
-                self.rebuild()
-                break
-                #warning set
+                    if len(x) > 0:
+                        max_time = max(max_time, x[-1])
+        except KeyError:
+            self.__reset_data()
+            self.rebuild()
+            #warning set
 
         if self.auto_scroll and max_time > 0:
             self.__scroll_x(max_time)
@@ -282,7 +277,7 @@ class PlotLogic:
             chunk_x = x[i:i+step]
             chunk_y = y[i:i+step]
 
-            if not chunk_x:
+            if len(chunk_x) == 0:
                 continue
 
             min_i = min(range(len(chunk_y)), key=lambda k: chunk_y[k])

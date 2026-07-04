@@ -1,6 +1,7 @@
 import can
 import threading
 import cantools
+import numpy as np
 
 from collections import defaultdict
 from can.interfaces.vector import VectorBus
@@ -69,7 +70,7 @@ class CANData:
         self.messages = {}
         self.msg_log = deque(maxlen=msg_log_max_size)
         self.signals = defaultdict(list)
-        self.signal_plot = defaultdict(lambda: {"time": deque(), "value": deque()})
+        self.signal_plot = {}
 
     def update_message(self, msg_id, data, dlc, receive_msg_timestamp, dbc_name:str = None, is_dbc=False, decoded=None):
 
@@ -103,10 +104,12 @@ class CANData:
 
     def update_signal(self, msg_id, name, time, value):
         key = (msg_id, name)
-        time_data = self.signal_plot[key]["time"]
-        value_data = self.signal_plot[key]["value"]
-
         with self.lock:
+            if key not in self.signal_plot:
+                self.signal_plot[key] = {"time": deque(), "value": deque()}
+
+            time_data = self.signal_plot[key]["time"]
+            value_data = self.signal_plot[key]["value"]
             time_data.append(time)
             value_data.append(value)
 
@@ -122,21 +125,22 @@ class CANData:
         with self.lock:
             return list(self.msg_log)
     
-    def get_signal_plot(self):
+    def get_signal_plot(self, signal_ids: tuple[tuple]):
         with self.lock:
             return {
-                name: {
-                    "time": list(data["time"]),
-                    "value": list(data["value"])
-                }
-                for name, data in self.signal_plot.items()}
+                sig: (
+                    np.array(self.signal_plot[sig]["time"], dtype=np.float64),
+                    np.array(self.signal_plot[sig]["value"], dtype=np.float64)
+                )
+                for sig in signal_ids
+            }
     
     def reset(self):
-        self.messages.clear()
-        self.msg_log.clear()
-        self.signals.clear()
-        self.signal_plot.clear()
-    
+        with self.lock:
+            self.messages.clear()
+            self.msg_log.clear()
+            self.signals.clear()
+            self.signal_plot.clear()
 
 
 

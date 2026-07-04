@@ -41,6 +41,7 @@ class SignalLogic:
         msg_copy = self.data.get_messages_snapshot()
 
         if not len(msg_copy):
+            
             dpg.delete_item(self.__signal_window_tag, children_only=True)
 
         for id, data in msg_copy.items():
@@ -74,14 +75,25 @@ class SignalLogic:
                     if len(dpg.get_item_configuration(f"{msg_id}_{sig}_combo")['items']) - 1 != self.__plot_count: # -1 : offset bcs default value
                         dpg.configure_item(f"{msg_id}_{sig}_combo", items = [i for i in range(self.__plot_count)] + ["-"])
                 else:
-                    with dpg.table_row(parent = f"{self.__signal_table_tag}_{msg_id}"):
+                    # проверку на существование объекта пришлось сделать из-за корявого освобождения id объектов в dpg
+                    with dpg.table_row(parent = f"{self.__signal_table_tag}_{msg_id}") as row:
                         combo_init_items = ["-"] + [i for i in range(self.__plot_count)]
-                        combo = dpg.add_combo(combo_init_items, width=-1, tag = f"{msg_id}_{sig}_combo", callback = lambda sender, plot_id, signal_name: self.event_hander.invoke("on_combo_plot_change", sender, plot_id, signal_name), user_data=(msg_id, sig))
-                        dpg.set_value(combo, combo_init_items[0])
-                        dpg.add_color_value(default_value=DEFAULT_PLOT_COLOR, parent = "shared_value_registr", tag = f"{msg_id}_{sig}_color")
-                        dpg.add_color_edit(tag = f"{msg_id}_{sig}_colore",no_alpha=True, no_inputs=True, no_label=True, no_drag_drop=True, no_options=True, no_tooltip=True, alpha_bar=True, source=f"{msg_id}_{sig}_color", width=-1, callback = lambda sender, data, signal_id: self.event_hander.invoke("on_plot_color_change", sender, data, signal_id), user_data=(msg_id, sig))
+                        if not dpg.does_item_exist(f"{msg_id}_{sig}_combo"): 
+                            dpg.add_combo(combo_init_items, parent= row, width=-1, tag = f"{msg_id}_{sig}_combo", callback = lambda sender, plot_id, signal_name: self.event_hander.invoke("on_combo_plot_change", sender, plot_id, signal_name), user_data=(msg_id, sig))
+                        else:
+                            dpg.show_item(f"{msg_id}_{sig}_combo")
+                        dpg.set_value(f"{msg_id}_{sig}_combo", combo_init_items[0])
+
+                        if not dpg.does_item_exist(f"{msg_id}_{sig}_color"):
+                            dpg.add_color_value(default_value=DEFAULT_PLOT_COLOR, parent = "shared_value_registr", tag = f"{msg_id}_{sig}_color")
+                        
+                        if not dpg.does_item_exist(f"{msg_id}_{sig}_colore"):
+                            dpg.add_color_edit(parent = row, tag = f"{msg_id}_{sig}_colore",no_alpha=True, no_inputs=True, no_label=True, no_drag_drop=True, no_options=True, no_tooltip=True, alpha_bar=True, source=f"{msg_id}_{sig}_color", width=-1, callback = lambda sender, data, signal_id: self.event_hander.invoke("on_plot_color_change", sender, data, signal_id), user_data=(msg_id, sig))
+                        else:
+                            dpg.show_item(f"{msg_id}_{sig}_colore")
                         dpg.add_text(sig)
-                        dpg.add_text(f"{value:.2f}", tag = f"{msg_id}_{sig}", color=(150, 200, 255, 255))
+
+                        dpg.add_text(f"{value:.2f}", parent = row, tag = f"{msg_id}_{sig}", color=(150, 200, 255, 255))
                         #dpg.add_drag_payload(parent=ui_obj, drag_data=sig, payload_type="plotting")
 
             except Exception as error: 
