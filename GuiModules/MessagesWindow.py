@@ -60,7 +60,7 @@ class MessagesLogic:
         if self.__is_follow_trace: dpg.set_y_scroll(self.msg_trace_tag, -1)
     
     def update(self): 
-        if self.is_window_active:
+        if self.is_window_active and not self.data.static_mode:
             self._update_rates()    
             self._update_track()
 
@@ -140,7 +140,5 @@ class MessagesWindow(BaseWindow):
                     dpg.add_table_column(label='DLC',width_fixed=True)
                     dpg.add_table_column(label='Данные (Hex)',width_stretch=True, init_width_or_weight=0.0)
 
-    @classmethod
-    def update(cls):
-        pass
+
 

@@ -71,7 +71,4 @@ class DBCConnectionWindow(BaseWindow):
             ):
                 dpg.add_file_extension(".dbc", color=FILE_EXT_COLOR)
 
-    @classmethod
-    def update(cls):
-        pass
 

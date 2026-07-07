@@ -38,6 +38,7 @@ class PlotLogic:
         self.event_hander = event_hander
         self.__set_up_event()
 
+
     def on_display_range_change(self, sender, sec_str: str):
         self.window_seconds = int (sec_str)
     
@@ -75,10 +76,11 @@ class PlotLogic:
                     i_right = searchsorted(x, xmax, "right")
                     x_view = x[i_left:i_right]
                     y_view = y[i_left:i_right]
-                    count_points = int(width * POINTS_PER_PIXEL / ((xmax - xmin) / MIN_DISPLAY_RANGE ))
+                    count_points = max(int(width * POINTS_PER_PIXEL / ((abs(xmax) - abs(xmin)) / MIN_DISPLAY_RANGE )), width / 5)
                     x_view, y_view = self.__min_max_decimate(x_view, y_view, count_points)
                     msg_id, signal_name = signal
                     dpg.set_value(f"plot_{msg_id}_{signal_name}", [x_view, y_view])
+                    print(len(x_view))
 
                     if len(x) > 0:
                         max_time = max(max_time, x[-1])

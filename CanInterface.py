@@ -27,6 +27,9 @@ class CANDriver:
 
     def recv(self, timeout=1):
         return self.bus.recv(timeout)
+    
+    def send_msg(self, msg):
+        self.bus.send(msg)
 
     def close(self):
         self.bus.shutdown()
@@ -69,11 +72,11 @@ class CANData:
         self.__plot_data_max_sec = plot_data_max_sec
         self.messages = {}
         self.msg_log = deque(maxlen=msg_log_max_size)
-        self.signals = defaultdict(list)
         self.signal_plot = {}
+        self.static_mode = False # using this mode for log static data
 
     def update_message(self, msg_id, data, dlc, receive_msg_timestamp, dbc_name:str = None, is_dbc=False, decoded=None):
-
+        if self.static_mode: raise Exception("Func is not allowed to use in static mode")
         with self.lock:
 
             if msg_id not in self.messages:
@@ -103,6 +106,7 @@ class CANData:
             
 
     def update_signal(self, msg_id, name, time, value):
+        if self.static_mode: raise Exception("Func is not allowed to use in static mode")
         key = (msg_id, name)
         with self.lock:
             if key not in self.signal_plot:
@@ -118,14 +122,20 @@ class CANData:
                 value_data.popleft()
 
     def get_messages_snapshot(self):
+        if self.static_mode: self.__get_static_msg()
         with self.lock:
             return dict(self.messages)
     
+    def __get_static_msg(self):
+        return self.messages
+    
     def get_trace_snapshot(self):
+        if self.static_mode: raise Exception("Func is not allowed to use in static mode")
         with self.lock:
             return list(self.msg_log)
     
     def get_signal_plot(self, signal_ids: tuple[tuple]):
+        if self.static_mode: self.__get_signal_plot_static(signal_ids)
         with self.lock:
             return {
                 sig: (
@@ -134,13 +144,21 @@ class CANData:
                 )
                 for sig in signal_ids
             }
+    def __get_signal_plot_static(self, signal_ids):
+        return {
+                sig: (
+                    self.signal_plot[sig]["time"],
+                    self.signal_plot[sig]["value"]
+                )
+                for sig in signal_ids
+            }
     
     def reset(self):
         with self.lock:
             self.messages.clear()
             self.msg_log.clear()
-            self.signals.clear()
             self.signal_plot.clear()
+            self.static_mode = False
 
 
 
@@ -259,5 +277,62 @@ class CANManager:
 
         
 
-        
+class CanLog:
+
+    __allowed_ext = ['blf']
+
+    def __init__(self):
+        self.signal_plot = {}
+        self.messages = {}
+        self.__init_time = None
+        self.is_ready = False
+        self.event = threading.Event()
+
+    def read_log(self, log_path: str, dbc_path):
+        if not any(log_path.endswith(ext) for ext in self.__allowed_ext): raise ValueError(f"{self.__name__} doesn't allow this ext. Allowed ext: {self.__allowed_ext}")
+
+        decoder = DBCDecoder(dbc_path)
+
+        with can.BLFReader(log_path) as reader:
+            
+            for msg in reader:
+                if self.event.is_set():
+                    return
+
+                if self.__init_time is None:
+                    self.__init_time = msg.timestamp
+
+                name, signals_info = decoder.decode(msg)
+                if signals_info is None: continue
+
+                if not msg.arbitration_id in self.messages:
+                    self.messages[msg.arbitration_id] = {
+                        "dbc_name": name or "",
+                        "is_dbc": True,
+                        "decoded": {}
+                    }
+                
+                
+
+                for sname, value in signals_info.items():
+                    if sname not in self.messages[msg.arbitration_id]['decoded']: self.messages[msg.arbitration_id]['decoded'][sname] = 0
+                    if (msg.arbitration_id, sname) not in self.signal_plot:
+                        self.signal_plot[(msg.arbitration_id, sname)] = {
+                            "time": [],
+                            "value": []
+                        }
+                    self.signal_plot[(msg.arbitration_id, sname)]['time'].append(msg.timestamp - self.__init_time)
+                    self.signal_plot[(msg.arbitration_id, sname)]['value'].append(value)
+                
+        for signal_id, data in self.signal_plot.items():
+            for axis, value  in data.items():
+                data[axis] = np.array(value, dtype=np.float64)
+
+        self.is_ready = True
+
+
+
     
+
+
+ 
