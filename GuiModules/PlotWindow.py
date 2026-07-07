@@ -1,8 +1,9 @@
 import dearpygui.dearpygui as dpg
+import numpy as np
 
 from BaseWindow import BaseWindow
 from math import ceil
-from numpy import searchsorted
+
 
 from settings import (
     MAX_PLOTS_COUNT,
@@ -72,15 +73,15 @@ class PlotLogic:
             data = self.data.get_signal_plot(self.signal_locations.keys())
             for signal, _ in self.signal_locations.items():     
                     x, y = data[signal]
-                    i_left = searchsorted(x, xmin) # на базе бинарного поиска
-                    i_right = searchsorted(x, xmax, "right")
+                    i_left = np.searchsorted(x, xmin) # на базе бинарного поиска
+                    i_right = np.searchsorted(x, xmax, "right")
                     x_view = x[i_left:i_right]
                     y_view = y[i_left:i_right]
-                    count_points = max(int(width * POINTS_PER_PIXEL / ((abs(xmax) - abs(xmin)) / MIN_DISPLAY_RANGE )), width / 5)
+                    count_points = max(int(width * POINTS_PER_PIXEL / ((xmax - xmin) / MIN_DISPLAY_RANGE )), width / 5)
                     x_view, y_view = self.__min_max_decimate(x_view, y_view, count_points)
                     msg_id, signal_name = signal
                     dpg.set_value(f"plot_{msg_id}_{signal_name}", [x_view, y_view])
-                    print(len(x_view))
+                    print(len(x_view), xmax-xmin)
 
                     if len(x) > 0:
                         max_time = max(max_time, x[-1])
@@ -272,36 +273,41 @@ class PlotLogic:
         
         step = ceil(len(x) / (exits_count // 2))
 
-        dx = []
-        dy = []
+        c_values_in_chunk = (len(x) // step) * step
 
-        for i in range(0, len(x), step):
-            chunk_x = x[i:i+step]
-            chunk_y = y[i:i+step]
+        chunks_x = x[:c_values_in_chunk].reshape(-1, step)
+        chunks_y = y[:c_values_in_chunk].reshape(-1, step)
 
-            if len(chunk_x) == 0:
-                continue
+        min_i = np.argmin(chunks_y, axis = 1)
+        max_i = np.argmax(chunks_y, axis = 1)
 
-            min_i = min(range(len(chunk_y)), key=lambda k: chunk_y[k])
-            max_i = max(range(len(chunk_y)), key=lambda k: chunk_y[k])
+        rows = np.arange(chunks_y.shape[0])
 
-            if min_i == max_i:
-                dx.append(chunk_x[min_i])
-                dy.append(chunk_y[min_i])
-            elif min_i < max_i:
-                dx.append(chunk_x[min_i])
-                dy.append(chunk_y[min_i])
+        first = np.minimum(min_i, max_i)
+        second = np.maximum(min_i, max_i)
 
-                dx.append(chunk_x[max_i])
-                dy.append(chunk_y[max_i])
-            else:
-                dx.append(chunk_x[max_i])
-                dy.append(chunk_y[max_i])
+        xmin = chunks_x[rows, first]
+        ymin = chunks_y[rows, first]
 
-                dx.append(chunk_x[min_i])
-                dy.append(chunk_y[min_i])
+        xmax = chunks_x[rows, second]
+        ymax = chunks_y[rows, second]
 
-        return list(dx), list(dy)
+        
+        dx = np.column_stack((xmin, xmax)).ravel()
+        dy = np.column_stack((ymin, ymax)).ravel()
+
+        tail_x = x[c_values_in_chunk:]
+        tail_y  = y[c_values_in_chunk:]
+
+        if len(tail_y):
+            tx, ty = self.__min_max_decimate(tail_x, tail_y, 2)
+            dx = np.concatenate((dx, tx))
+            dy = np.concatenate((dy, ty))
+        
+
+        
+
+        return dx, dy
 
     
 
