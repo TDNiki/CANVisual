@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
 import time
 import ctypes
+import os
 
 from GuiModules.BusConnectionWindow import BusConnectionWindow
 from GuiModules.DBCConnectionWindow import DBCConnectionWindow
@@ -9,7 +10,7 @@ from GuiModules.SignalsWindow import SignalsWindow
 from GuiModules.PlotWindow import PlotWindow
 from CanInterface import CANData
 from EventHandler import EventHandler
-from settings import MAX_DATA_IN_RAM
+from settings import MAX_DATA_IN_RAM, FILE_LOG_BASE_NAME
 
 
 
@@ -23,9 +24,14 @@ class AppGui:
     event_handler = EventHandler()
 
     def __init__(self, update_interval = 0.1):
+        log_path = os.path.join(os.getcwd(), FILE_LOG_BASE_NAME)
+        if not os.path.exists(log_path): os.mkdir(log_path)
+        self.log_path = log_path
         self.__setup_gui()
         self.__last_update_time = time.time()
         self.update_interval = update_interval
+
+        
 
         with dpg.value_registry(tag="shared_value_registr"): pass #Для синхронизации данных
 
@@ -79,7 +85,7 @@ class AppGui:
                 dpg.add_table_column(init_width_or_weight=0.7)
 
                 with dpg.table_row():
-                    BusConnectionWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=80)
+                    BusConnectionWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=80, log_path = self.log_path)
                     DBCConnectionWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=80)
                 with dpg.table_row(height=-1):
                     SignalsWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=-1)

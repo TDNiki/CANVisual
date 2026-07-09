@@ -2,14 +2,17 @@ import dearpygui.dearpygui as dpg
 import threading
 
 from BaseWindow import BaseWindow
-from CanInterface import CANManager, CanLog, CANData
+from CanInterface import CANManager, CanLogReader, CANData
 from settings import FILE_EXT_COLOR
+from datetime import datetime
+from os import path
+
 
 class BusLogic:
 
     dbc_path = None
 
-    def __init__(self, data: CANData, con_button_tag, discon_buttun_tag, load_log_tag, clear_log_tag, window_tag, log_status_tag):
+    def __init__(self, data: CANData, con_button_tag, discon_buttun_tag, load_log_tag, clear_log_tag, window_tag, log_status_tag, log_path):
         self.can = CANManager(data)
         self.data = data
         self.con_button_tag = con_button_tag
@@ -18,8 +21,9 @@ class BusLogic:
         self.clear_log_tag = clear_log_tag
         self.window_tag = window_tag
         self.log_status_tag = log_status_tag
-        self.log = None
-        self.log_thread = None
+        self.log_read = None
+        self.log_thread_read = None
+        self.log_path = log_path
 
     def update_available_interfaces(self, combo_tag: str):
         self.can.scan_available_configs()
@@ -30,6 +34,17 @@ class BusLogic:
         for config in self.can.get_configs():
             interfaces.append(f"{config['interface']} : {config['channel']}")
         return interfaces
+    
+    def enable_log(self):
+        if self.can.log_mode: return   
+
+        self.can.enable_log(path.join(self.log_path, "CANLOG_" + f"{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.blf"))
+
+    def on_log_checkbox_call(self, sender, data):
+        if data and not self.can.log_mode: self.enable_log()
+        else: self.can.disable_log()
+
+
     
     def on_connect_click(self, combo_interface_tag: str, bitrate_combo_tag: str):
 
@@ -61,12 +76,12 @@ class BusLogic:
 
     def open_log(self, sender, data):
 
-        log = CanLog()
-        self.log = log
+        log = CanLogReader()
+        self.log_read = log
 
-        self.log_thread = threading.Thread(target = log.read_log, args=(data['file_path_name'], self.dbc_path), daemon = True)
+        self.log_thread_read = threading.Thread(target = log.read_log, args=(data['file_path_name'], self.dbc_path), daemon = True)
 
-        self.log_thread.start()
+        self.log_thread_read.start()
 
         dpg.configure_item(self.load_log_tag, enabled = False)
         dpg.configure_item(self.clear_log_tag, enabled = True)
@@ -85,27 +100,27 @@ class BusLogic:
 
 
     def update(self):
-        if self.log and self.log.is_ready:
+        if self.log_read and self.log_read.is_ready:
             self.data.static_mode = True
-            self.data.messages = self.log.messages
-            self.data.signal_plot = self.log.signal_plot
-            self.log_thread = None
-            self.log = None
+            self.data.messages = self.log_read.messages
+            self.data.signal_plot = self.log_read.signal_plot
+            self.log_thread_read = None
+            self.log_read = None
             dpg.configure_item(self.log_status_tag, default_value = "Лог загружен")
     
     def clear_log(self, sender, data):
         print('button is pressed')
-        if self.log:
+        if self.log_read:
             print("log")
-            self.log.event.set()
+            self.log_read.event.set()
 
-        if self.log_thread is not None and self.log_thread.is_alive():
+        if self.log_thread_read is not None and self.log_thread_read.is_alive():
             print("alive")
-            self.log_thread.join()
-            self.log_thread = None
+            self.log_thread_read.join()
+            self.log_thread_read = None
             
         self.data.reset()
-        self.log = None
+        self.log_read = None
         dpg.configure_item(self.log_status_tag, default_value = "Лог не загружен")
         dpg.configure_item(self.load_log_tag, enabled = True)
         dpg.configure_item(self.clear_log_tag, enabled = False)
@@ -132,11 +147,12 @@ class BusConnectionWindow(BaseWindow):
     __log_status_tag = "log_status_text"
     __load_log_tag = "load_log_button"
     __clear_log_tag = "clear_log_button"
+    __is_logging_tag = "is_logging_check"
     
 
     @classmethod
     def setup(cls, *args, **kwargs):
-        cls.logic = BusLogic(kwargs['data'], cls.__connect_button_tag, cls.__disconnect_button_tag, cls.__load_log_tag, cls.__clear_log_tag, cls.tag, cls.__log_status_tag)
+        cls.logic = BusLogic(kwargs['data'], cls.__connect_button_tag, cls.__disconnect_button_tag, cls.__load_log_tag, cls.__clear_log_tag, cls.tag, cls.__log_status_tag, kwargs['log_path'])
         with dpg.child_window(
             tag=cls.tag,
             label=cls.title,
@@ -183,6 +199,8 @@ class BusConnectionWindow(BaseWindow):
                                 tag = cls.__disconnect_button_tag,
                                 enabled = False
                             )
+                        with dpg.table_row():
+                            dpg.add_checkbox(label = "Запись", tag=cls.__is_logging_tag, callback=cls.logic.on_log_checkbox_call)
 
                 with dpg.tab(label="Оффлайн"):
                     with dpg.group(horizontal = True):
@@ -192,6 +210,7 @@ class BusConnectionWindow(BaseWindow):
 
                     with dpg.file_dialog(
                         label = "Выбрать BLF",
+                        default_path = kwargs['log_path'],
                         directory_selector=False,
                         show=False,
                         tag=f"{cls.tag}_file_dialog_offline",

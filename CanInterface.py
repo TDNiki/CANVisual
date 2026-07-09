@@ -5,7 +5,8 @@ import numpy as np
 
 from collections import defaultdict
 from can.interfaces.vector import VectorBus
-from collections import deque # bufer, max = auto deletion first
+from collections import deque# bufer, max = auto deletion first
+from queue import Queue
 
 
 class CANDriver:
@@ -175,7 +176,7 @@ class CANScanner:
         self.init_time = None
         self.stop_event = threading.Event()
 
-    def start(self):
+    def start(self, log_obj = None):
 
         while not self.stop_event.is_set():
             msg = self.driver.recv(1)
@@ -200,6 +201,8 @@ class CANScanner:
             if decoded:
                 for sig, val in decoded.items():
                     self.data_store.update_signal(msg.arbitration_id, sig, t - self.init_time, val)
+                if log_obj:
+                    log_obj.add_log(msg)
 
     def stop(self):
         self.stop_event.set()
@@ -215,9 +218,20 @@ class CANManager:
         self.can_data = data
         self.scan_available_configs()
         self.thread = None
+        self.log_mode = False
+        self.log_file_name = None
+        self.log_thread = None
 
+    def enable_log(self, log_file_name: str | None = None):
+        if self.log_mode: return
+        self.log_file_name = log_file_name
+        self.log_mode = True
     
+    def disable_log(self):
+        if not self.log_mode: return
         
+        self.log_mode = False
+    
 
     def scan_available_configs(self, interfaces=("vector", "pcan")):
         self.configs = can.detect_available_configs(interfaces=interfaces)
@@ -247,10 +261,25 @@ class CANManager:
         
         self.scanner = CANScanner(self.driver, decoder, self.can_data)
 
+        if self.log_mode:
+            self.log = CanLogWriter(self.log_file_name)
+            self.log_thread = threading.Thread(
+                target = self.log.log_init,
+                daemon=True
+            )
+            self.log_thread.start()
+
+        args = (self.log,) if self.log_mode else (None, )
+
         self.thread = threading.Thread(
             target = self.scanner.start,
-            daemon=True
+            daemon=True,
+            args=args
         )
+
+        
+
+        
 
         self.thread.start()
 
@@ -267,17 +296,50 @@ class CANManager:
 
         if self.thread:
             self.thread.join()
+        if self.log_thread:
+            self.log.stop_log()
+            self.log_thread.join()
+            self.log = None
+            self.log_thread = None
         
         self.driver.close()
         self.thread = None
         self.driver = None
         self.scanner = None
+
         self.can_data.reset()
 
 
-        
+class CanLogWriter:
 
-class CanLog:
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+        self.data_to_log = Queue()
+        self.event = threading.Event()
+        self.lock = threading.Lock()
+
+    def log_init(self):
+
+        with can.BLFWriter(self.file_path) as writter:
+            while not self.event.is_set():
+                try:
+                    msg = self.data_to_log.get(timeout=0.1)
+                except Exception: #empty except
+                    continue
+
+                writter.on_message_received(msg)
+
+    def add_log(self, msg: can.Message):
+        if not isinstance(msg, can.Message): raise TypeError("msg must be can.Message class")
+
+
+        self.data_to_log.put(msg) # Queue already has safe treathing 
+
+    
+    def stop_log(self):
+        self.event.set()
+
+class CanLogReader:
 
     __allowed_ext = ['blf']
 

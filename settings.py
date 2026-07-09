@@ -1,5 +1,8 @@
 MSG_TIMEOUT = 3 # MSG_TIMEOUT * frequency
 
+
+FILE_LOG_BASE_NAME = "CanLogs"
+
 # Plot settings
 DEFAULT_PLOT_COLOR = (24, 81, 232)
 MIN_PLOTS_COUNT = 1
