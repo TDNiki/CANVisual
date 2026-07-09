@@ -11,7 +11,8 @@ from settings import (
     DEFAULT_DISPLAY_RANGE,
     MIN_DISPLAY_RANGE,
     MAX_DISPLAY_RANGE,
-    POINTS_PER_PIXEL
+    POINTS_PER_PIXEL,
+    MIN_DISTANCE_PLOT_TOOL_SHOW
 )
 
 class Subplot:
@@ -21,6 +22,7 @@ class Subplot:
         self.index = index
         self.x_axis = None
         self.y_axis = None
+        self.plot_id = None
         self.signals = []
 
 class PlotLogic:
@@ -29,6 +31,7 @@ class PlotLogic:
     cols = MIN_PLOTS_COUNT
     window_seconds = 10
     auto_scroll = False
+    __subplot_tag = "subplots"
 
     def __init__(self, data, event_hander, plot_window_tag):
         self.data = data
@@ -69,6 +72,8 @@ class PlotLogic:
         max_time = 0
         xmin, xmax = dpg.get_axis_limits(self.subplots[0].x_axis)
         width, _ = dpg.get_item_rect_size(self.__plot_window_tag) # у subplot нету такого аттрибута
+        dpg.set_value(f"{self.__plot_window_tag}_tooltip", "")
+        
         try:
             data = self.data.get_signal_plot(self.signal_locations.keys())
             for signal, _ in self.signal_locations.items():     
@@ -81,10 +86,19 @@ class PlotLogic:
                     x_view, y_view = self.__min_max_decimate(x_view, y_view, count_points)
                     msg_id, signal_name = signal
                     dpg.set_value(f"plot_{msg_id}_{signal_name}", [x_view, y_view])
-                    print(len(x_view), xmax-xmin)
+
+                    # print(len(x_view), xmax-xmin)
 
                     if len(x) > 0:
                         max_time = max(max_time, x[-1])
+
+                    if not len(x_view): continue
+                    x, y = dpg.get_plot_mouse_pos()
+                    idx = np.abs(x_view - x).argmin()
+                    distance = np.sqrt((x - x_view[idx])**2 + (y - y_view[idx])**2)
+                    if distance < MIN_DISTANCE_PLOT_TOOL_SHOW * ((xmax - xmin) / MIN_DISPLAY_RANGE * 0.8): 
+                        dpg.set_value(f"{self.__plot_window_tag}_tooltip", f"{signal_name}: {x_view[idx]:.2f}; {y_view[idx]:.2f}")
+
         except KeyError:
             self.__reset_data()
             self.rebuild()
@@ -92,6 +106,8 @@ class PlotLogic:
 
         if self.auto_scroll and max_time > 0:
             self.__scroll_x(max_time)
+
+        
     
     def __scroll_x(self, max_time):
         start = max(0, max_time - self.window_seconds)
@@ -103,14 +119,15 @@ class PlotLogic:
 
         saved_locations = self.signal_locations.copy()
 
-        if dpg.does_item_exist("subplots"):
-            dpg.delete_item("subplots")
+        if dpg.does_item_exist(self.__subplot_tag):
+            dpg.delete_item(self.__subplot_tag)
+            
 
         self.subplots.clear()
 
         with dpg.subplots(
             parent=PlotWindow.tag,
-            tag="subplots",
+            tag=self.__subplot_tag,
             rows=self.rows,
             columns=self.cols,
             width=-1,
@@ -122,9 +139,10 @@ class PlotLogic:
 
                 subplot = Subplot(i)
 
-                with dpg.plot(label = f"График №{i}"):
+                with dpg.plot(label = f"График №{i}") as plot_id:
 
                     dpg.add_plot_legend()
+                    subplot.plot_id = plot_id
 
                     subplot.x_axis = dpg.add_plot_axis(
                         dpg.mvXAxis,
@@ -138,7 +156,13 @@ class PlotLogic:
                         payload_type="plotting"
                     )
 
+                   
+                    
+
                 self.subplots.append(subplot)
+                
+                
+
 
         self.signal_locations.clear()
 
@@ -360,6 +384,17 @@ class PlotWindow(BaseWindow):
                 dpg.add_checkbox(tag="auto_x", label="Отслеживание по времени", callback=cls.logic.set_auto_scroll_x)
                 dpg.add_drag_int(label="Диапазон отображения", default_value=DEFAULT_DISPLAY_RANGE, min_value=MIN_DISPLAY_RANGE, max_value=MAX_DISPLAY_RANGE, callback = cls.logic.on_display_range_change)
 
+            with dpg.tooltip(cls.tag, hide_on_activity = True) as tooltip:
+                dpg.add_text("", tag = f"{cls.tag}_tooltip", color = (255, 255, 255))
+            
+            with dpg.theme() as tooltip_theme:
+                with dpg.theme_component(dpg.mvTooltip):
+                    dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (0, 0, 0, 0))
+                    dpg.add_theme_color(dpg.mvThemeCol_Border,(0, 0, 0, 0))
+                    dpg.add_theme_style(dpg.mvStyleVar_WindowBorderSize, 0)
+
+            
+            dpg.bind_item_theme(tooltip, tooltip_theme)
             cls.logic.rebuild()
 
 

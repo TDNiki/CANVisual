@@ -73,6 +73,8 @@ class AppGui:
 
         dpg.bind_theme(button_theme)
 
+        
+
 
     def __setup_gui(self):     
 
@@ -85,8 +87,8 @@ class AppGui:
                 dpg.add_table_column(init_width_or_weight=0.7)
 
                 with dpg.table_row():
-                    BusConnectionWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=80, log_path = self.log_path)
                     DBCConnectionWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=80)
+                    BusConnectionWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=80, log_path = self.log_path)
                 with dpg.table_row(height=-1):
                     SignalsWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=-1)
                     PlotWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=-1)
@@ -122,7 +124,8 @@ class AppGui:
             for window in self.windows + self.additional_windows:
                 try:
                     window.logic.update()
-                except: pass
+                except Exception as err:
+                    print(err)
             
             self.__last_update_time = current_time
 
