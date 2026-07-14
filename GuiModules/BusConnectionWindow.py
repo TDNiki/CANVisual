@@ -89,12 +89,11 @@ class BusLogic:
 
     def open_log(self, sender, data):
         if self.can.get_connection_status(): raise Exception("Can't read log while connect online")
+        self.event_handler.invoke("resume")
 
         log = CanLogReader()
         self.log_read = log
-
-        # self.log_read.
-
+        
         self.log_thread_read = threading.Thread(target = log.read_log, args=(data['file_path_name'], self.dbc_path), daemon = True)
 
         self.log_thread_read.start()
@@ -118,7 +117,7 @@ class BusLogic:
 
     def update(self):
         if self.log_read and self.log_read.is_ready:
-            self.data.static_mode = True
+            self.data.enable_static_mode(self.log_read.path)
             self.data.messages = self.log_read.messages
             self.data.signal_plot = self.log_read.signal_plot
             self.log_thread_read = None
@@ -136,6 +135,7 @@ class BusLogic:
             
         self.data.reset()
         self.log_read = None
+        self.log_read_path = None
         dpg.configure_item(self.log_status_tag, default_value = "Лог не загружен")
         dpg.configure_item(self.load_log_tag, enabled = True)
         dpg.configure_item(self.clear_log_tag, enabled = False)
@@ -150,14 +150,15 @@ class BusLogic:
     def save_info(self):
 
         params = {}
-        if self.log_path:
-            params['path'] = self.log_path
-        if dpg.get_value(self.bitrate_tag):
-            params['bitrate'] = dpg.get_value(self.bitrate_tag)
-        if dpg.get_value(self.interface_tag):
-            interface, channel = dpg.get_value(self.interface_tag).split(" : ")
-            params['interface'] = interface
-            params['channel'] = channel
+        if self.data.is_static_mode():
+            params['file_path_name'] = self.data.static_log_path
+        else:
+            if dpg.get_value(self.bitrate_tag):
+                params['bitrate'] = dpg.get_value(self.bitrate_tag)
+            if dpg.get_value(self.interface_tag):
+                interface, channel = dpg.get_value(self.interface_tag).split(" : ")
+                params['interface'] = interface
+                params['channel'] = channel
 
         # if self.log_read:
         #     mode = 0
@@ -181,11 +182,12 @@ class BusLogic:
 
     def load_info(self, data: dict):
         self.clear()
-        if data['mode'] > 0:
-            self.open_log("", data['path'])
-        elif data["mode"] == 0:
-            dpg.set_value("bitrate_combo", data['bitrate'])
-            dpg.set_value(self.combo_interface_tag, f"{data['interface']} : {data['channel']}")
+        if data.get('file_path_name'):
+            data['file_name'] = path.basename(data['file_path_name'])
+            self.open_log("", data)
+        else:
+            if data.get('bitrate'): dpg.set_value("bitrate_combo", data['bitrate'])
+            if data.get('interface'): dpg.set_value(self.combo_interface_tag, f"{data['interface']} : {data['channel']}")
 
 
 

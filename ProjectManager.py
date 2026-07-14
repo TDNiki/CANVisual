@@ -38,7 +38,7 @@ class ProjectData:
     
     def export_settings(self): return self.__settings
 
-    def get_setting(self, id: str): return self.__settings[id]
+    def get_settings(self, id: str): return self.__settings.get(id)
 
 
 

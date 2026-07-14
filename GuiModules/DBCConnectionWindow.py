@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from BaseWindow import BaseWindow
 from GuiModules.BusConnectionWindow import BusConnectionWindow
+from os import path
 
 from settings import FILE_EXT_COLOR
 
@@ -13,7 +14,6 @@ class DBCLogic:
         self.status_dbc = status_dbc
         self.window_tag = window_tag
         self.dbc_path = None
-        self.dbc_name = None
 
 
     def update(self): return
@@ -24,19 +24,19 @@ class DBCLogic:
         BusConnectionWindow.logic.set_dbc(data['file_path_name'])
         dpg.configure_item(self.status_dbc, default_value = f"Подключенный dbc: {data['file_name'].split('.')[0]}")
         self.dbc_path = data['file_path_name']
-        self.dbc_name = data['file_name']
     
     def save_info(self):
 
         if not self.dbc_path: return
 
         return self.window_tag, {
-            "file_path_name": self.dbc_path,
-            "file_name": self.dbc_name
+            "file_path_name": self.dbc_path
         }
     
     def load_info(self, data):
-        self.on_file_load("", data)
+        if data.get('file_path_name'):
+            data['file_name'] = path.basename(data['file_path_name'])
+            self.on_file_load("", data)
 
 
 class DBCConnectionWindow(BaseWindow):

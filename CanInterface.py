@@ -74,10 +74,21 @@ class CANData:
         self.messages = {}
         self.msg_log = deque(maxlen=msg_log_max_size)
         self.signal_plot = {}
-        self.static_mode = False # using this mode for log static data
+        self.__static_mode = False # using this mode for log static data
+        self.static_log_path = None
+
+    def is_static_mode(self): return self.__static_mode
+    
+    def enable_static_mode(self, log_path: str):
+        self.__static_mode = True
+        self.static_log_path = log_path
+    
+    def disable_static_mode(self):
+        self.__static_mode = False
+        self.static_log_path = None
 
     def update_message(self, msg_id, data, dlc, receive_msg_timestamp, dbc_name:str = None, is_dbc=False, decoded=None):
-        if self.static_mode: raise Exception("Func is not allowed to use in static mode")
+        if self.__static_mode: raise Exception("Func is not allowed to use in static mode")
         with self.lock:
 
             if msg_id not in self.messages:
@@ -107,7 +118,7 @@ class CANData:
             
 
     def update_signal(self, msg_id, name, time, value):
-        if self.static_mode: raise Exception("Func is not allowed to use in static mode")
+        if self.__static_mode: raise Exception("Func is not allowed to use in static mode")
         key = (msg_id, name)
         with self.lock:
             if key not in self.signal_plot:
@@ -123,7 +134,7 @@ class CANData:
                 value_data.popleft()
 
     def get_messages_snapshot(self):
-        if self.static_mode: self.__get_static_msg()
+        if self.__static_mode: self.__get_static_msg()
         with self.lock:
             return dict(self.messages)
     
@@ -131,12 +142,12 @@ class CANData:
         return self.messages
     
     def get_trace_snapshot(self):
-        if self.static_mode: raise Exception("Func is not allowed to use in static mode")
+        if self.__static_mode: raise Exception("Func is not allowed to use in static mode")
         with self.lock:
             return list(self.msg_log)
     
     def get_signal_plot(self, signal_ids: tuple[tuple]):
-        if self.static_mode: self.__get_signal_plot_static(signal_ids)
+        if self.__static_mode: self.__get_signal_plot_static(signal_ids)
         with self.lock:
             return {
                 sig: (
@@ -159,7 +170,7 @@ class CANData:
             self.messages.clear()
             self.msg_log.clear()
             self.signal_plot.clear()
-            self.static_mode = False
+            self.disable_static_mode()
 
 
 
@@ -349,11 +360,13 @@ class CanLogReader:
         self.__init_time = None
         self.is_ready = False
         self.event = threading.Event()
+        self.path = None
 
     def read_log(self, log_path: str, dbc_path):
         if not any(log_path.endswith(ext) for ext in self.__allowed_ext): raise ValueError(f"{self.__name__} doesn't allow this ext. Allowed ext: {self.__allowed_ext}")
 
         decoder = DBCDecoder(dbc_path)
+        self.path = log_path
 
         with can.BLFReader(log_path) as reader:
             

@@ -81,7 +81,7 @@ class ProjectLogic:
         
 
     def on_open_project_btn_click(self, sender):
-        if self.cur_project: self.request_close(self)
+        if self.cur_project: self.request_close()
 
         dpg.show_item(f"{self.window_tag}_file_dialog_oprj")
         
@@ -91,11 +91,17 @@ class ProjectLogic:
     def open_project(self, sender, info):
         if self.cur_project: self.request_close(self)
 
-        self.state_manager.open_project(info['file_path_name'])
+        self.cur_project = self.state_manager.open_project(info['file_path_name'])
         self.save_path = info['file_path_name']
         self.save_name = info['file_name']
 
-        #
+        dbc = self.cur_project.get_settings(DBCConnectionWindow.tag)
+        if dbc:
+            DBCConnectionWindow.logic.load_info(dbc)
+
+        bus = self.cur_project.get_settings(BusConnectionWindow.tag)
+        if bus:
+             BusConnectionWindow.logic.load_info(bus)
     
     def on_state_update(self, project_module_id: str, data: dict):
         if not self.cur_project:
