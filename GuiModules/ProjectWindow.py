@@ -9,6 +9,9 @@ from settings import FILE_EXT_COLOR
 
 from GuiModules.BusConnectionWindow import BusConnectionWindow
 from GuiModules.DBCConnectionWindow import DBCConnectionWindow
+from GuiModules.PlotWindow import PlotWindow
+
+from os import path
 
 
 
@@ -19,12 +22,11 @@ class ProjectLogic:
         self.event_handler = event_handler
         self.cur_project: ProjectData = None
         self.save_path = None
-        self.save_name = None
         self.window_tag = window_tag
         self.setup_events()
     
     def setup_events(self):
-        self.event_handler.sub('on_data_change', self.on_state_update)
+        ...
 
     def show_save_dialog(self):
         if dpg.is_item_shown(f"{self.window_tag}_file_dialog_wprj"): return
@@ -44,7 +46,6 @@ class ProjectLogic:
     def close_project(self):
         self.cur_project = None
         self.save_path = None
-        self.save_name = None
         
 
     def save_project(self, sender):
@@ -59,12 +60,12 @@ class ProjectLogic:
         print(f"saveas {info['file_path_name']}")
         if not self.cur_project: self.cur_project = self.state_manager.init_project()
         self.save_path = info['file_path_name']
-        self.save_name = info['file_name']
         self.save()
 
-    def save(self):
+    def save(self, save_project: bool = True):
         # DBC
         dbc = DBCConnectionWindow.logic.save_info()
+
         if dbc:
             self.cur_project.edit_settings(*dbc)
         # BUS
@@ -72,9 +73,12 @@ class ProjectLogic:
         if bus:
             self.cur_project.edit_settings(*bus)
         #PLOT and Signals
+        plot = PlotWindow.logic.save_info()
+        if plot:
+            self.cur_project.edit_settings(*plot)
 
-        #
-        self.state_manager.save_project(self.save_path, self.cur_project, self.save_name)
+        if save_project:
+            self.state_manager.save_project(self.save_path, self.cur_project)
 
 
 
@@ -93,7 +97,6 @@ class ProjectLogic:
 
         self.cur_project = self.state_manager.open_project(info['file_path_name'])
         self.save_path = info['file_path_name']
-        self.save_name = info['file_name']
 
         dbc = self.cur_project.get_settings(DBCConnectionWindow.tag)
         if dbc:
@@ -103,13 +106,10 @@ class ProjectLogic:
         if bus:
              BusConnectionWindow.logic.load_info(bus)
     
-    def on_state_update(self, project_module_id: str, data: dict):
-        if not self.cur_project:
-            self.cur_project = self.state_manager.init_project()
+        plot = self.cur_project.get_settings(PlotWindow.tag)
+        if plot:
+             PlotWindow.logic.load_info(plot)
 
-
-            
-        self.cur_project.edit_settings(project_module_id, data)
 
     def update(self): ...
     
@@ -195,8 +195,8 @@ class ProjectWindow(BaseWindow):
         with dpg.menu(label = "Последние"):
             projects = cls.logic.state_manager.get_meta_data()
             if projects:
-                for project in projects:
-                    dpg.add_menu_item(label = project.name, user_data=(project.path), callback = cls.logic.on_project_open)
+                for project_name, values in projects.items():
+                    dpg.add_menu_item(label = path.basename(project_name).split(".")[0], callback =  lambda: cls.logic.open_project("", values))
             else:
                 dpg.add_text("Не найдены")
         

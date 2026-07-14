@@ -154,7 +154,7 @@ class CANData:
                     np.array(self.signal_plot[sig]["time"], dtype=np.float64),
                     np.array(self.signal_plot[sig]["value"], dtype=np.float64)
                 )
-                for sig in signal_ids
+                for sig in signal_ids if self.signal_plot.get(sig)
             }
     def __get_signal_plot_static(self, signal_ids):
         return {
@@ -162,7 +162,7 @@ class CANData:
                     self.signal_plot[sig]["time"],
                     self.signal_plot[sig]["value"]
                 )
-                for sig in signal_ids
+                for sig in signal_ids if self.signal_plot.get(sig)
             }
     
     def reset(self):

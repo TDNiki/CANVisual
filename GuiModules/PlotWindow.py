@@ -85,34 +85,36 @@ class PlotLogic:
         width, _ = dpg.get_item_rect_size(self.__plot_window_tag) # у subplot нету такого аттрибута
         dpg.set_value(f"{self.__plot_window_tag}_tooltip", "")
         
-        try:
-            data = self.data.get_signal_plot(self.signal_locations.keys())
-            for signal, _ in self.signal_locations.items():    
-                    x, y = data[signal]
-                    i_left = np.searchsorted(x, xmin) # на базе бинарного поиска
-                    i_right = np.searchsorted(x, xmax, "right")
-                    x_view = x[i_left:i_right]
-                    y_view = y[i_left:i_right]
-                    count_points = max(int(width * POINTS_PER_PIXEL / ((xmax - xmin) / MIN_DISPLAY_RANGE )), width / 5)
-                    x_view, y_view = self.__min_max_decimate(x_view, y_view, count_points)
-                    msg_id, signal_name = signal
-                    dpg.set_value(f"plot_{msg_id}_{signal_name}", [x_view, y_view])
+        data = self.data.get_signal_plot(self.signal_locations.keys())
+        for signal, _ in self.signal_locations.items():
+            try:    
+                x, y = data[signal]
+                i_left = np.searchsorted(x, xmin) # на базе бинарного поиска
+                i_right = np.searchsorted(x, xmax, "right")
+                x_view = x[i_left:i_right]
+                y_view = y[i_left:i_right]
+                count_points = max(int(width * POINTS_PER_PIXEL / ((xmax - xmin) / MIN_DISPLAY_RANGE )), width / 2)
+                x_view, y_view = self.__min_max_decimate(x_view, y_view, count_points)
+                msg_id, signal_name = signal
+                dpg.set_value(f"plot_{msg_id}_{signal_name}", [x_view, y_view])
 
-                    # print(len(x_view), xmax-xmin)
+                # print(len(x_view), xmax-xmin)
 
-                    if len(x) > 0:
-                        max_time = max(max_time, x[-1])
+                if len(x) > 0:
+                    max_time = max(max_time, x[-1])
 
-                    if not len(x_view): continue
-                    x, y = dpg.get_plot_mouse_pos()
-                    idx = np.abs(x_view - x).argmin()
-                    distance = np.sqrt((x - x_view[idx])**2 + (y - y_view[idx])**2)
-                    if distance < MIN_DISTANCE_PLOT_TOOL_SHOW * ((xmax - xmin) / MIN_DISPLAY_RANGE * 0.8): 
-                        dpg.set_value(f"{self.__plot_window_tag}_tooltip", f"{signal_name}: {x_view[idx]:.2f}; {y_view[idx]:.2f}")
+                if not len(x_view): continue
+                x, y = dpg.get_plot_mouse_pos()
+                idx = np.abs(x_view - x).argmin()
+                distance = np.sqrt((x - x_view[idx])**2 + (y - y_view[idx])**2)
+                if distance < MIN_DISTANCE_PLOT_TOOL_SHOW * ((xmax - xmin) / MIN_DISPLAY_RANGE * 0.8): 
+                    dpg.set_value(f"{self.__plot_window_tag}_tooltip", f"{signal_name}: {x_view[idx]:.2f}; {y_view[idx]:.2f}")
 
-        except KeyError as err:
-            self.__reset_data()
-            self.rebuild()
+            except KeyError:
+                pass
+            except Exception as err:
+                self.__reset_data()
+                self.rebuild()
 
         if self.auto_scroll and max_time > 0:
             self.__scroll_x(max_time)
@@ -197,8 +199,8 @@ class PlotLogic:
         self.__delete_plot_theme(signal)
         self.event_hander.invoke("on_signals_move", signal, "-")
 
-    def add_signal(self, signal: tuple[str, str], subplot_index):
-
+    def add_signal(self, signal: tuple[int, str], subplot_index):
+        
         if signal in self.signal_locations:
             return
         
@@ -249,7 +251,7 @@ class PlotLogic:
         self.signal_theme.pop(signal_id)
 
         
-    def move_signal(self, signal: tuple[str, str], new_subplot_index):
+    def move_signal(self, signal: tuple[int, str], new_subplot_index):
 
         self.remove_signal(signal)
         self.add_signal(signal, new_subplot_index)
@@ -290,7 +292,7 @@ class PlotLogic:
     def __reset_data(self):
         self.signal_locations.clear()
 
-    def on_signal_change(self, sender, plot_index:str, signal_name: tuple[str, str]):
+    def on_signal_change(self, sender, plot_index:str, signal_name: tuple[int, str]):
         if not plot_index.isdigit(): 
             self.remove_signal(signal_name)
             return
@@ -343,6 +345,39 @@ class PlotLogic:
         
 
         return dx, dy
+
+    def save_info(self):
+        
+        settings = {
+            "plot_count": (self.rows, self.cols),
+        }
+
+        if self.signal_locations:
+            formatted_sig = dict()
+            colors = []
+            for signal_id, plot_index in self.signal_locations.items():
+                formatted_sig['_'.join(str(i) for i in signal_id)] = plot_index
+                colors.append(dpg.get_value(f"{signal_id[0]}_{signal_id[1]}_color"))
+            
+            settings['signals_locations'] = formatted_sig
+            settings['signals_color'] = colors
+        
+        return self.__plot_window_tag, settings
+
+    def load_info(self, data):
+
+        if data['plot_count']:
+            r, c = data['plot_count']
+            self.set_columns(c)
+            self.set_rows(r)
+        
+        if data['signals_locations']:
+            for index, (key, plot_index) in enumerate(data['signals_locations'].items()):
+                key = key.split("_")
+                key[0] = int(key[0])
+                self.add_signal(tuple(key), plot_index)
+                self.on_color_change("", data['signals_color'][index], key) 
+    
 
     
 

@@ -24,3 +24,5 @@ MAX_DATA_IN_RAM = 120 # in sec; how much data will be stored in temporary memory
 DEFAULT_DISPLAY_RANGE = 10 # sec
 MIN_DISPLAY_RANGE = DEFAULT_DISPLAY_RANGE
 MAX_DISPLAY_RANGE = 60 # sec
+
+

@@ -1,0 +1,35 @@
+{
+    "dbc": {
+        "file_path_name": "c:\\Users\\NikiD\\Desktop\\camozzi\\j1939(Camozzi)new251.dbc",
+        "file_name": "j1939(Camozzi)new251.dbc"
+    },
+    "bus": {
+        "bitrate": "500",
+        "interface": "vector",
+        "channel": "0"
+    },
+    "plot": {
+        "plot_count": [
+            2,
+            2
+        ],
+        "signals_locations": {
+            "217056256_EngSpeed": 0,
+            "217056000_EngPercentLoadAtCurrentSpeed": 1
+        },
+        "signals_color": [
+            [
+                232.0,
+                23.996078491210938,
+                23.996078491210938,
+                255.0
+            ],
+            [
+                221.1999969482422,
+                225.6666717529297,
+                237.49803161621094,
+                255.0
+            ]
+        ]
+    }
+}

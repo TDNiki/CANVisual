@@ -83,7 +83,7 @@ class AppGui:
 
         dpg.create_context()
         
-        with dpg.window(tag = "main_window") as root:
+        with dpg.window(tag = "main_window", on_close = self.exit_gui) as root:
 
             with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchSame):
                 dpg.add_table_column(init_width_or_weight=0.3)
@@ -139,6 +139,7 @@ class AppGui:
         dpg.render_dearpygui_frame()
 
 
-    @staticmethod
-    def exit_gui():
+
+    def exit_gui(self):
         dpg.destroy_context()
+        self.state_manager.export_meta_data()

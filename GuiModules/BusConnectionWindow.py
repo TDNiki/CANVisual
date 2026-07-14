@@ -186,8 +186,8 @@ class BusLogic:
             data['file_name'] = path.basename(data['file_path_name'])
             self.open_log("", data)
         else:
-            if data.get('bitrate'): dpg.set_value("bitrate_combo", data['bitrate'])
-            if data.get('interface'): dpg.set_value(self.combo_interface_tag, f"{data['interface']} : {data['channel']}")
+            if data.get('bitrate'): dpg.set_value(self.bitrate_tag, data['bitrate'])
+            if data.get('interface'): dpg.set_value(self.interface_tag, f"{data['interface']} : {data['channel']}")
 
 
 

@@ -3,7 +3,7 @@ import os
 
 from settings import FILE_META_NAME
 from datetime import datetime
-from collections import defaultdict
+
 
 
 class ProjectData:
@@ -72,16 +72,16 @@ class ProjectManager:
         if not time_last: time_last = datetime.now().timestamp()
         
         self.meta[project_name] = {
-            'path': project_path,
+            'file_path_name': project_path,
             'time_last': time_last
         }
     
-    def save_project(self, path: str, project: ProjectData, name: str):
+    def save_project(self, path: str, project: ProjectData):
         
         with open(path, 'w', encoding = 'utf-8') as data:
             json.dump(project.export_settings(), data, indent = 4)
         
-        self.set_meta_data(name, path)
+        self.set_meta_data(os.path.basename(path), path)
 
         
       
@@ -99,8 +99,11 @@ class ProjectManager:
         try:
             with open(path, mode = 'r', encoding="utf-8") as data:
                     return ProjectData(json.load(data))
+            
+            self.set_meta_data(os.path.basename(path), path)
         except Exception as err:
             raise Exception(f"Can't read this format of file, be sure of correct ext or pattern of save file: {err}")
+        
     
     def init_project(self):
         return ProjectData()
