@@ -26,8 +26,6 @@ class SignalLogic:
         self.event_hander.sub("on_signals_move", self.__on_signal_move)
 
 
-
-
     def __set_plot_count(self, count):
         self.__plot_count = count
     

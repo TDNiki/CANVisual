@@ -1,0 +1,12 @@
+{
+    "bus": {
+        "path": "c:\\Users\\NikiD\\Desktop\\camozzi\\CANVisual\\CanLogs",
+        "bitrate": "500",
+        "interface": "vector",
+        "channel": "0"
+    },
+    "dbc": {
+        "file_path_name": "c:\\Users\\NikiD\\Desktop\\camozzi\\j1939(Camozzi)new251.dbc",
+        "file_name": "j1939(Camozzi)new251.dbc"
+    }
+}

@@ -386,7 +386,7 @@ class CanLogReader:
                     self.signal_plot[(msg.arbitration_id, sname)]['time'].append(msg.timestamp - self.__init_time)
                     self.signal_plot[(msg.arbitration_id, sname)]['value'].append(value)
                 
-        for signal_id, data in self.signal_plot.items():
+        for _, data in self.signal_plot.items():
             for axis, value  in data.items():
                 data[axis] = np.array(value, dtype=np.float64)
 

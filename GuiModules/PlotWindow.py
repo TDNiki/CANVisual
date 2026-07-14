@@ -40,7 +40,15 @@ class PlotLogic:
         self.signal_theme = {} # signal id: theme
         self.__plot_window_tag = plot_window_tag
         self.event_hander = event_hander
+        self.pause = False
         self.__set_up_event()
+    
+
+    def set_pause(self):
+        if not self.pause: self.pause = True
+    
+    def set_resume(self):
+        if self.pause: self.pause = False
 
 
     def on_display_range_change(self, sender, sec_str: str):
@@ -49,6 +57,8 @@ class PlotLogic:
     def __set_up_event(self):
         self.event_hander.sub("on_combo_plot_change", self.on_signal_change)
         self.event_hander.sub("on_plot_color_change", self.on_color_change)
+        self.event_hander.sub("pause", self.set_pause)
+        self.event_hander.sub("resume", self.set_resume)
 
     def on_color_change(self, sender: str | None, color, signal_id):
         if sender and not dpg.is_item_activated(sender): #обработка от спама вызовов
@@ -68,6 +78,7 @@ class PlotLogic:
 
 
     def update(self):
+        if self.pause: return
 
         max_time = 0
         xmin, xmax = dpg.get_axis_limits(self.subplots[0].x_axis)
@@ -76,7 +87,7 @@ class PlotLogic:
         
         try:
             data = self.data.get_signal_plot(self.signal_locations.keys())
-            for signal, _ in self.signal_locations.items():     
+            for signal, _ in self.signal_locations.items():    
                     x, y = data[signal]
                     i_left = np.searchsorted(x, xmin) # на базе бинарного поиска
                     i_right = np.searchsorted(x, xmax, "right")
@@ -99,10 +110,9 @@ class PlotLogic:
                     if distance < MIN_DISTANCE_PLOT_TOOL_SHOW * ((xmax - xmin) / MIN_DISPLAY_RANGE * 0.8): 
                         dpg.set_value(f"{self.__plot_window_tag}_tooltip", f"{signal_name}: {x_view[idx]:.2f}; {y_view[idx]:.2f}")
 
-        except KeyError:
+        except KeyError as err:
             self.__reset_data()
             self.rebuild()
-            #warning set
 
         if self.auto_scroll and max_time > 0:
             self.__scroll_x(max_time)
@@ -191,7 +201,7 @@ class PlotLogic:
 
         if signal in self.signal_locations:
             return
-
+        
         subplot = self.subplots[subplot_index]
 
         subplot.signals.append(signal)
@@ -286,6 +296,7 @@ class PlotLogic:
             return
         if signal_name not in self.signal_locations: self.add_signal(signal_name, int(plot_index))
         else: self.move_signal(signal_name, int(plot_index))
+
 
     def __min_max_decimate(self, x, y, exits_count: int):
         """

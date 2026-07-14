@@ -9,9 +9,12 @@ from settings import FILE_EXT_COLOR
 class DBCLogic:
 
 
-    def __init__(self, status_dbc):
+    def __init__(self, status_dbc, window_tag):
         self.status_dbc = status_dbc
-        pass
+        self.window_tag = window_tag
+        self.dbc_path = None
+        self.dbc_name = None
+
 
     def update(self): return
 
@@ -20,7 +23,20 @@ class DBCLogic:
 
         BusConnectionWindow.logic.set_dbc(data['file_path_name'])
         dpg.configure_item(self.status_dbc, default_value = f"Подключенный dbc: {data['file_name'].split('.')[0]}")
-        
+        self.dbc_path = data['file_path_name']
+        self.dbc_name = data['file_name']
+    
+    def save_info(self):
+
+        if not self.dbc_path: return
+
+        return self.window_tag, {
+            "file_path_name": self.dbc_path,
+            "file_name": self.dbc_name
+        }
+    
+    def load_info(self, data):
+        self.on_file_load("", data)
 
 
 class DBCConnectionWindow(BaseWindow):
@@ -33,7 +49,7 @@ class DBCConnectionWindow(BaseWindow):
 
     @classmethod
     def setup(cls, *args, **kwargs):
-        cls.logic = DBCLogic(cls.__dbc_connected_tag)
+        cls.logic = DBCLogic(cls.__dbc_connected_tag, cls.tag)
         with dpg.child_window(
             tag=cls.tag,
             label=cls.title,

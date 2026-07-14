@@ -8,9 +8,11 @@ from GuiModules.DBCConnectionWindow import DBCConnectionWindow
 from GuiModules.MessagesWindow import MessagesWindow
 from GuiModules.SignalsWindow import SignalsWindow
 from GuiModules.PlotWindow import PlotWindow
+from GuiModules.ProjectWindow import ProjectWindow
 from CanInterface import CANData
 from EventHandler import EventHandler
 from settings import MAX_DATA_IN_RAM, FILE_LOG_BASE_NAME
+from ProjectManager import ProjectManager
 
 
 
@@ -18,10 +20,11 @@ class AppGui:
     """"""
     
     windows = [BusConnectionWindow, DBCConnectionWindow, SignalsWindow, PlotWindow]
-    additional_windows = [MessagesWindow]
+    additional_windows = [MessagesWindow, ProjectWindow]
 
     data = CANData(plot_data_max_sec=MAX_DATA_IN_RAM)
     event_handler = EventHandler()
+    state_manager = ProjectManager()
 
     def __init__(self, update_interval = 0.1):
         log_path = os.path.join(os.getcwd(), FILE_LOG_BASE_NAME)
@@ -98,7 +101,11 @@ class AppGui:
         with dpg.viewport_menu_bar():
             with dpg.menu(label = "Дополнителные инструменты"):
                 for window in self.additional_windows:
-                    window.setup_menu_bar_intro(data = self.data, event_handler = self.event_handler)
+                    window.setup_menu_bar_intro(data = self.data, event_handler = self.event_handler, state_manager = self.state_manager)
+            with dpg.menu(label = "Проекты"):
+                ProjectWindow.setup_project_menu()
+                    
+
         
         dpg.create_viewport(title="CAN GUI", min_width=1200, min_height=800)
         dpg.setup_dearpygui()

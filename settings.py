@@ -2,6 +2,7 @@ MSG_TIMEOUT = 3 # MSG_TIMEOUT * frequency
 
 
 FILE_LOG_BASE_NAME = "CanLogs"
+FILE_META_NAME = "ProjectSavesMeta"
 
 # Plot settings
 DEFAULT_PLOT_COLOR = (24, 81, 232)
