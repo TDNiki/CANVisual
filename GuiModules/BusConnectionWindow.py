@@ -60,6 +60,7 @@ class BusLogic:
             dpg.configure_item(self.con_button_tag, label = 'Подключен', enabled = False)
             dpg.configure_item(self.discon_button_tag, label = 'Отключить', enabled = True)
             dpg.configure_item(self.load_log_tag, enabled = False)
+            dpg.configure_item(self.clr_online_btn, enabled = False)
 
             self.event_handler.invoke("resume")
 
@@ -74,6 +75,7 @@ class BusLogic:
         dpg.configure_item(self.con_button_tag, label = 'Подключить', enabled = True)
         dpg.configure_item(self.discon_button_tag, label = 'Отключено', enabled = False)
         dpg.configure_item(self.load_log_tag, enabled = True)
+        dpg.configure_item(self.clr_online_btn, enabled = True)
     
     def on_clear_click(self):
         self.event_handler.invoke("resume")
