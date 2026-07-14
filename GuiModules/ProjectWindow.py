@@ -32,8 +32,8 @@ class ProjectLogic:
         dpg.show_item(f"{self.window_tag}_file_dialog_wprj")
 
     def request_close(self):
-        x = dpg.get_viewport_client_width() // 2
-        y = dpg.get_viewport_client_height() // 2
+        x = (dpg.get_viewport_client_width() - dpg.get_item_width(f"{self.window_tag}_confirm_action")) // 2
+        y = (dpg.get_viewport_client_height() - dpg.get_item_height(f"{self.window_tag}_confirm_action")) // 2
         dpg.configure_item(
             f"{self.window_tag}_confirm_action",
             show = True,
@@ -89,7 +89,7 @@ class ProjectLogic:
         
     
     def open_project(self, sender, info):
-        if self.cur_project: self.request_close(self)
+        if self.cur_project: self.request_close()
 
         self.cur_project = self.state_manager.open_project(info['file_path_name'])
         self.save_path = info['file_path_name']
