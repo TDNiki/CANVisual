@@ -60,18 +60,24 @@ class PlotLogic:
         self.event_hander.sub("pause", self.set_pause)
         self.event_hander.sub("resume", self.set_resume)
 
-    def on_color_change(self, sender: str | None, color, signal_id):
+    def on_color_change(self, sender: str | None, color, signal_id, force_change: bool = True):
         if sender and not dpg.is_item_activated(sender): #обработка от спама вызовов
             return
         if signal_id not in self.signal_theme: return
 
-
-        color = [int(color[i] * 255) for i in range(len(color) - 1)]
+        if color[0] < 1:
+            color = [int(color[i] * 255) for i in range(len(color) - 1)]
 
         dpg.delete_item(self.signal_theme[signal_id], children_only=True)
 
         with dpg.theme_component(parent=self.signal_theme[signal_id]):
             dpg.add_theme_color(dpg.mvPlotCol_Line, color, category=dpg.mvThemeCat_Plots)
+        
+        if force_change:
+            if not dpg.does_item_exist(f"{signal_id[0]}_{signal_id[1]}_color"):
+                dpg.add_color_value(default_value = color, tag =  f"{signal_id[0]}_{signal_id[1]}_color", parent = "shared_value_registr")
+            else:
+                dpg.set_value(f"{signal_id[0]}_{signal_id[1]}_color", color)
 
         #dpg.bind_item_theme(f"plot_{msg_id}_{signal_name}", self.signal_theme[signal_id])
 
@@ -233,6 +239,8 @@ class PlotLogic:
 
         with dpg.group(parent=parent, horizontal=False):
             dpg.add_text("Цвет: ")
+            if not dpg.does_item_exist(f"{msg_id}_{signal_name}_color"):
+                dpg.add_color_value(tag =  f"{msg_id}_{signal_name}_color", parent = "shared_value_registr")
             dpg.add_color_edit(label = "Цвет линии", source=f"{msg_id}_{signal_name}_color", parent=parent, no_alpha=True, no_inputs=True, no_label=True, no_drag_drop=True, no_options=True, no_tooltip=True, alpha_bar=True, width=-1, callback = lambda sender, data, signal_id: self.on_color_change(sender, data, signal_id), user_data = (signal))
 
 
@@ -375,7 +383,8 @@ class PlotLogic:
             for index, (key, plot_index) in enumerate(data['signals_locations'].items()):
                 key = key.split("_")
                 key[0] = int(key[0])
-                self.add_signal(tuple(key), plot_index)
+                key = tuple(key)
+                self.add_signal(key, plot_index)
                 self.on_color_change("", data['signals_color'][index], key) 
     
 

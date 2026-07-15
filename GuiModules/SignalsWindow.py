@@ -32,7 +32,8 @@ class SignalLogic:
     def __on_signal_move(self, signal_id, plot_id):
 
         msg_id, sig = signal_id
-        dpg.set_value(f"{msg_id}_{sig}_combo", plot_id)
+        if not dpg.does_item_exist(f"{msg_id}_{sig}_combo_value"): # пришлось сделать для синхр данных, если проект открыт раньше чем сигналы появились
+            dpg.add_string_value(default_value = str(plot_id), parent = "shared_value_registr", tag = f"{msg_id}_{sig}_combo_value")
 
     def update(self): 
 
@@ -77,10 +78,11 @@ class SignalLogic:
                     with dpg.table_row(parent = f"{self.__signal_table_tag}_{msg_id}") as row:
                         combo_init_items = ["-"] + [i for i in range(self.__plot_count)]
                         if not dpg.does_item_exist(f"{msg_id}_{sig}_combo"): 
-                            dpg.add_combo(combo_init_items, parent= row, width=-1, tag = f"{msg_id}_{sig}_combo", callback = lambda sender, plot_id, signal_name: self.event_hander.invoke("on_combo_plot_change", sender, plot_id, signal_name), user_data=(msg_id, sig))
+                            if not dpg.does_item_exist(f"{msg_id}_{sig}_combo_value"): 
+                                dpg.add_string_value(default_value = "-", parent = "shared_value_registr", tag = f"{msg_id}_{sig}_combo_value")
+                            dpg.add_combo(combo_init_items, source = f"{msg_id}_{sig}_combo_value",  parent= row, width=-1, tag = f"{msg_id}_{sig}_combo", callback = lambda sender, plot_id, signal_name: self.event_hander.invoke("on_combo_plot_change", sender, plot_id, signal_name), user_data=(msg_id, sig))
                         else:
                             dpg.show_item(f"{msg_id}_{sig}_combo")
-                        dpg.set_value(f"{msg_id}_{sig}_combo", combo_init_items[0])
 
                         if not dpg.does_item_exist(f"{msg_id}_{sig}_color"):
                             dpg.add_color_value(default_value=DEFAULT_PLOT_COLOR, parent = "shared_value_registr", tag = f"{msg_id}_{sig}_color")
