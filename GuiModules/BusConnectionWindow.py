@@ -60,7 +60,7 @@ class BusLogic:
             dpg.configure_item(self.con_button_tag, label = 'Подключен', enabled = False)
             dpg.configure_item(self.discon_button_tag, label = 'Отключить', enabled = True)
             dpg.configure_item(self.load_log_tag, enabled = False)
-            dpg.configure_item(self.clr_online_btn, enabled = False)
+            # dpg.configure_item(self.clr_online_btn, enabled = False)
 
             self.event_handler.invoke("resume")
 
@@ -75,7 +75,7 @@ class BusLogic:
         dpg.configure_item(self.con_button_tag, label = 'Подключить', enabled = True)
         dpg.configure_item(self.discon_button_tag, label = 'Отключено', enabled = False)
         dpg.configure_item(self.load_log_tag, enabled = True)
-        dpg.configure_item(self.clr_online_btn, enabled = True)
+        # dpg.configure_item(self.clr_online_btn, enabled = True)
     
     def on_clear_click(self):
         self.event_handler.invoke("resume")
@@ -102,7 +102,7 @@ class BusLogic:
         dpg.configure_item(self.clear_log_tag, enabled = True)
         dpg.configure_item(self.log_status_tag, default_value = f"Загрузка лога: {data['file_name'].split('.')[0]}")
         dpg.configure_item(self.con_button_tag, enabled = False)
-        dpg.configure_item(self.clr_online_btn, enabled = False)
+        # dpg.configure_item(self.clr_online_btn, enabled = False)
 
 
 
@@ -140,7 +140,7 @@ class BusLogic:
         dpg.configure_item(self.load_log_tag, enabled = True)
         dpg.configure_item(self.clear_log_tag, enabled = False)
         dpg.configure_item(self.con_button_tag, enabled = True)
-        dpg.configure_item(self.clr_online_btn, enabled = True)
+        # dpg.configure_item(self.clr_online_btn, enabled = True)
     
     def clear(self):
         if self.log_read or self.can.get_connection_status():
@@ -267,12 +267,12 @@ class BusConnectionWindow(BaseWindow):
                                 enabled = False
                             )
                         with dpg.table_row():
-                            dpg.add_button(
-                                label = "Очистить",
-                                width = -1,
-                                callback = cls.logic.on_clear_click,
-                                tag = cls.__clear_button_tag
-                            )
+                            # dpg.add_button(
+                            #     label = "Очистить",
+                            #     width = -1,
+                            #     callback = cls.logic.on_clear_click,
+                            #     tag = cls.__clear_button_tag
+                            # )
                             dpg.add_checkbox(label = "Запись", tag=cls.__is_logging_tag, callback=cls.logic.on_log_checkbox_call)
                             
 

@@ -1,3 +1,5 @@
+APP_NAME = "CANVisual"
+
 MSG_TIMEOUT = 3 # MSG_TIMEOUT * frequency
 
 

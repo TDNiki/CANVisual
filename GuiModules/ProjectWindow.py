@@ -5,7 +5,7 @@ from EventHandler import EventHandler
 from ProjectManager import ProjectManager, ProjectData
 from datetime import datetime
 
-from settings import FILE_EXT_COLOR
+from settings import FILE_EXT_COLOR, APP_NAME
 
 from GuiModules.BusConnectionWindow import BusConnectionWindow
 from GuiModules.DBCConnectionWindow import DBCConnectionWindow
@@ -44,8 +44,11 @@ class ProjectLogic:
 
     
     def close_project(self):
+        if not self.cur_project: return
         self.cur_project = None
         self.save_path = None
+
+        self.__set_app_name()   
         
 
     def save_project(self, sender):
@@ -54,13 +57,18 @@ class ProjectLogic:
             self.save()
 
 
-
+    def __set_app_name(self, project_name: str | None = None):
+        if project_name:
+            dpg.set_viewport_title(APP_NAME + f" - {project_name}")
+        else:
+             dpg.set_viewport_title(APP_NAME)
 
     def save_as_project(self, sender, info): 
         print(f"saveas {info['file_path_name']}")
         if not self.cur_project: self.cur_project = self.state_manager.init_project()
         self.save_path = info['file_path_name']
         self.save()
+        self.__set_app_name(path.basename(info['file_path_name']).split(".")[0])
 
     def save(self, save_project: bool = True):
         # DBC
@@ -110,6 +118,7 @@ class ProjectLogic:
         if plot:
              PlotWindow.logic.load_info(plot)
 
+        self.__set_app_name(path.basename(info['file_path_name']).split('.')[0])
 
     def update(self): ...
     

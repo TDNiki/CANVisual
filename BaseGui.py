@@ -11,7 +11,7 @@ from GuiModules.PlotWindow import PlotWindow
 from GuiModules.ProjectWindow import ProjectWindow
 from CanInterface import CANData
 from EventHandler import EventHandler
-from settings import MAX_DATA_IN_RAM, FILE_LOG_BASE_NAME
+from settings import MAX_DATA_IN_RAM, FILE_LOG_BASE_NAME, APP_NAME
 from ProjectManager import ProjectManager
 
 
@@ -107,7 +107,7 @@ class AppGui:
                     
 
         
-        dpg.create_viewport(title="CAN GUI", min_width=1200, min_height=800)
+        dpg.create_viewport(title = APP_NAME, min_width=1200, min_height=800)
         dpg.setup_dearpygui()
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
         dpg.show_viewport()
