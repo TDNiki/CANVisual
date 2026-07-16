@@ -12,7 +12,8 @@ from settings import (
     MIN_DISPLAY_RANGE,
     MAX_DISPLAY_RANGE,
     POINTS_PER_PIXEL,
-    MIN_DISTANCE_PLOT_TOOL_SHOW
+    MIN_DISTANCE_PLOT_TOOL_SHOW,
+    DEFAULT_PLOT_COLOR
 )
 
 class Subplot:
@@ -27,37 +28,94 @@ class Subplot:
 
 class CursorX:
 
-    def __init__(self, general_tag: str, x: float, plots: tuple[Subplot]):
+    def __init__(self, general_tag: str):
         self.__tag = general_tag
         self.__cursors = {} # plot_id : cursor_id
-        self.__init_share_registr(x)
-        self.edit_lines(x, plots)
+        self.annot = []
+        self.x = 0
+        # self.__init_share_registr(float(x)) почему то source не работает в adddrag
+        self.mode = -1 # -1: hide, 0 static mode, 1 real time (checking mouse pos)
+
         
     def get_cursor_id(self): return self.__tag
     
     def __init_share_registr(self, x):
         if not dpg.does_item_exist(f"{self.__tag}_x_pos"):
             dpg.add_float_value(tag = f"{self.__tag}_x_pos", default_value = x, parent = "shared_value_registr")
-    
-    def edit_lines(self, plots: tuple[Subplot]):
+        
+    def clear_cursors(self):
+        for cursor in self.__cursors.values():
+            if dpg.does_item_exist(cursor):
+                dpg.delete_item(cursor)
+        
+        for ann in self.annot:
+            if dpg.does_item_exist(ann):
+                dpg.delete_item(ann)
+        
+        self.annot.clear()
         self.__cursors.clear()
 
+    def __on_x_change(self, sender):
+        x = dpg.get_value(sender)
+        if self.mode == 0 and x != self.x:
+            self.update_cursors(x)
+
+    def edit_lines(self, plots: tuple[Subplot]):
+        self.clear_cursors()
+        
         for plot in plots:
             self.__cursors[plot.plot_id] = dpg.add_drag_line(
-            vertical=True,
-            source = f"{self.__tag}_x_pos",
-            show = False
+            label = self.__tag,
+            show = False if self.mode < 0 else True,
+            parent = plot.plot_id,
+            callback = self.__on_x_change
             )
     
     def show(self):
+        if self.mode >= 0: return
         for cursor in self.__cursors.values():
             dpg.show_item(cursor)
+        for ann in self.annot:
+            dpg.show_item(ann)
+        
+        self.mode = 1
+
+    def set_static(self):
+        self.mode = 0
+        
 
     def hide(self): 
+        if self.mode < 0: return
         for cursor in self.__cursors.values():
             dpg.hide_item(cursor)
+
+        for ann in self.annot:
+            dpg.hide_item(ann)
+        
+        self.mode = -1
+
+    def update_cursors(self, x):
+        for cursor in self.__cursors.values():
+                dpg.set_value(cursor, x)
+            
+        self.x = x
+    
+    def update_info(self, x: float, y: float = None, plot_id: str | int = None, signal_name: str = None, offset_annotation: tuple = (15, 15), color: tuple = DEFAULT_PLOT_COLOR):
+        if self.mode < 0: return
+        if self.x != x:
+            self.update_cursors(x)
+
+        if y:
+            if not dpg.does_item_exist(f"{signal_name}_ann{self.__tag}"):
+                self.annot.append(dpg.add_plot_annotation(label = f"{signal_name}: {y:.2f}", color = color, tag = f"{signal_name}_ann{self.__tag}", parent = plot_id, default_value = (x, y), offset = offset_annotation))
+            else:
+                dpg.configure_item(f"{signal_name}_ann{self.__tag}", label = f"{signal_name}: {y:.2f}", color = color, parent = plot_id, default_value = (x, y))
+
+            
+
     
     def get_distance_between_cursors(self, cursor):
+        if self.mode < 0 and cursor.mode < 0: return
         cursor_x = dpg.get_value(f"{cursor.get_cursor_id()}_x_pos")
         self_cursor_x = dpg.get_value(f"{self.get_cursor_id()}_x_pos")
 
@@ -82,9 +140,9 @@ class PlotLogic:
         self.event_hander = event_hander
         self.pause = False
         self.__set_up_event()
+        self.first_cursor = CursorX("first_c")
+        self.second_cursor = CursorX("second_c")
 
-        self.first_cursor = None
-        self.second_cursor = None
     
 
     def set_pause(self):
@@ -135,6 +193,8 @@ class PlotLogic:
         dpg.set_value(f"{self.__plot_window_tag}_tooltip", "")
         
         data = self.data.get_signal_plot(self.signal_locations.keys())
+
+        
         for signal, _ in self.signal_locations.items():
             try:    
                 x, y = data[signal]
@@ -153,11 +213,26 @@ class PlotLogic:
                     max_time = max(max_time, x[-1])
 
                 if not len(x_view): continue
+
                 x, y = dpg.get_plot_mouse_pos()
                 idx = np.abs(x_view - x).argmin()
-                distance = np.sqrt((x - x_view[idx])**2 + (y - y_view[idx])**2)
-                if distance < MIN_DISTANCE_PLOT_TOOL_SHOW * ((xmax - xmin) / MIN_DISPLAY_RANGE * 0.8): 
-                    dpg.set_value(f"{self.__plot_window_tag}_tooltip", f"{signal_name}: {x_view[idx]:.2f}; {y_view[idx]:.2f}")
+                # distance = np.sqrt((x - x_view[idx])**2 + (y - y_view[idx])**2)
+                # if distance < MIN_DISTANCE_PLOT_TOOL_SHOW * ((xmax - xmin) / MIN_DISPLAY_RANGE * 0.8): 
+                #     dpg.set_value(f"{self.__plot_window_tag}_tooltip", f"{signal_name}: {x_view[idx]:.2f}; {y_view[idx]:.2f}")
+                if self.first_cursor.mode == 1: #mouse real time
+                    self.first_cursor.update_info(x_view[idx], y_view[idx], f"plot_{self.signal_locations[signal]}", signal_name, (-15, 15), dpg.get_value(f"{msg_id}_{signal_name}_color"))
+                elif self.first_cursor.mode == 0:
+                    idx_static = np.abs(x_view - self.first_cursor.x).argmin()
+                    self.first_cursor.update_info(self.first_cursor.x, y_view[idx_static], f"plot_{self.signal_locations[signal]}", signal_name, (-15, 15), dpg.get_value(f"{msg_id}_{signal_name}_color"))
+
+                if self.second_cursor.mode == 1: #mouse real time
+                    self.second_cursor.update_info(x_view[idx], y_view[idx], f"plot_{self.signal_locations[signal]}", signal_name, (-15, 15), dpg.get_value(f"{msg_id}_{signal_name}_color"))
+                elif self.second_cursor.mode == 0:
+                    idx_static = np.abs(x_view - self.second_cursor.x).argmin()
+                    self.second_cursor.update_info(self.second_cursor.x, y_view[idx_static], f"plot_{self.signal_locations[signal]}", signal_name, (-15, 15), dpg.get_value(f"{msg_id}_{signal_name}_color"))
+                
+
+
 
             except KeyError:
                 pass
@@ -200,7 +275,7 @@ class PlotLogic:
 
                 subplot = Subplot(i)
 
-                with dpg.plot(label = f"График №{i}") as plot_id:
+                with dpg.plot(label = f"График №{i}", tag = f"plot_{i}") as plot_id:
 
                     dpg.add_plot_legend()
                     subplot.plot_id = plot_id
@@ -232,7 +307,9 @@ class PlotLogic:
             subplot_index = min(subplot_index, len(self.subplots) - 1)
 
             self.add_signal(signal, subplot_index)
-            
+        
+        self.first_cursor.edit_lines(self.subplots)
+        self.second_cursor.edit_lines(self.subplots)
         
 
     def remove_signal(self, signal):
@@ -429,8 +506,31 @@ class PlotLogic:
                 key = tuple(key)
                 self.add_signal(key, plot_index)
                 self.on_color_change("", data['signals_color'][index], key) 
-    
 
+    def on_cursor_change(self, sender, _, data):
+        cur_number, mode = data
+        match mode:
+            case -1:
+                if cur_number == 1:
+                    self.first_cursor.show()
+                else:
+                    self.second_cursor.show()
+                
+                dpg.configure_item(sender, user_data = (cur_number, 1))
+            case 0:
+                if cur_number == 1:
+                    self.first_cursor.hide()
+                else:
+                    self.second_cursor.hide()
+                
+                dpg.configure_item(sender, user_data = (cur_number, -1))
+            case 1:
+                if cur_number == 1:
+                    self.first_cursor.set_static()
+                else:
+                    self.second_cursor.set_static()
+                
+                dpg.configure_item(sender, user_data = (cur_number, 0))
     
 
     
@@ -482,6 +582,10 @@ class PlotWindow(BaseWindow):
                 dpg.add_checkbox(tag="auto_x", label="Отслеживание по времени", callback=cls.logic.set_auto_scroll_x)
                 dpg.add_drag_int(label="Диапазон отображения", default_value=DEFAULT_DISPLAY_RANGE, min_value=MIN_DISPLAY_RANGE, max_value=MAX_DISPLAY_RANGE, callback = cls.logic.on_display_range_change)
 
+            with dpg.group(horizontal = True):
+                dpg.add_button(label = "Курсор 1", user_data = (1, -1), callback = cls.logic.on_cursor_change)
+                dpg.add_button(label = "Курсор 2", user_data = (2, -1), callback = cls.logic.on_cursor_change)
+
             with dpg.tooltip(cls.tag, hide_on_activity = True) as tooltip:
                 dpg.add_text("", tag = f"{cls.tag}_tooltip", color = (255, 255, 255))
             
@@ -493,6 +597,7 @@ class PlotWindow(BaseWindow):
 
             
             dpg.bind_item_theme(tooltip, tooltip_theme)
+
             cls.logic.rebuild()
 
 

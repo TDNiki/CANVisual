@@ -36,7 +36,7 @@ class AppGui:
 
         
 
-        with dpg.value_registry(tag="shared_value_registr"): pass #Для синхронизации данных
+         #Для синхронизации данных
 
         
     @staticmethod
@@ -82,6 +82,8 @@ class AppGui:
     def __setup_gui(self):     
 
         dpg.create_context()
+
+        with dpg.value_registry(tag="shared_value_registr"): pass
         
         with dpg.window(tag = "main_window", on_close = self.exit_gui) as root:
 
