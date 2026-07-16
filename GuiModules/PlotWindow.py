@@ -25,6 +25,46 @@ class Subplot:
         self.plot_id = None
         self.signals = []
 
+class CursorX:
+
+    def __init__(self, general_tag: str, x: float, plots: tuple[Subplot]):
+        self.__tag = general_tag
+        self.__cursors = {} # plot_id : cursor_id
+        self.__init_share_registr(x)
+        self.edit_lines(x, plots)
+        
+    def get_cursor_id(self): return self.__tag
+    
+    def __init_share_registr(self, x):
+        if not dpg.does_item_exist(f"{self.__tag}_x_pos"):
+            dpg.add_float_value(tag = f"{self.__tag}_x_pos", default_value = x, parent = "shared_value_registr")
+    
+    def edit_lines(self, plots: tuple[Subplot]):
+        self.__cursors.clear()
+
+        for plot in plots:
+            self.__cursors[plot.plot_id] = dpg.add_drag_line(
+            vertical=True,
+            source = f"{self.__tag}_x_pos",
+            show = False
+            )
+    
+    def show(self):
+        for cursor in self.__cursors.values():
+            dpg.show_item(cursor)
+
+    def hide(self): 
+        for cursor in self.__cursors.values():
+            dpg.hide_item(cursor)
+    
+    def get_distance_between_cursors(self, cursor):
+        cursor_x = dpg.get_value(f"{cursor.get_cursor_id()}_x_pos")
+        self_cursor_x = dpg.get_value(f"{self.get_cursor_id()}_x_pos")
+
+        if cursor_x > self_cursor_x: return cursor_x - self_cursor_x
+        elif self_cursor_x > cursor_x: return self_cursor_x - cursor_x
+        else: return 0
+
 class PlotLogic:
 
     rows = MIN_PLOTS_COUNT
@@ -42,6 +82,9 @@ class PlotLogic:
         self.event_hander = event_hander
         self.pause = False
         self.__set_up_event()
+
+        self.first_cursor = None
+        self.second_cursor = None
     
 
     def set_pause(self):
