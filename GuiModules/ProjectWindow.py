@@ -42,6 +42,10 @@ class ProjectLogic:
             pos = (x, y)
         )
 
+    def on_close_request(self):
+        if dpg.is_item_shown(f"{self.window_tag}_confirm_action"): dpg.hide_item(f"{self.window_tag}_confirm_action")
+        self.close_project()
+
     
     def close_project(self):
         if not self.cur_project: return
@@ -101,7 +105,6 @@ class ProjectLogic:
         
     
     def open_project(self, sender, info):
-        if self.cur_project: self.request_close()
 
         self.cur_project = self.state_manager.open_project(info['file_path_name'])
         self.save_path = info['file_path_name']
@@ -193,7 +196,7 @@ class ProjectWindow(BaseWindow):
             
                 with dpg.table_row():
                     dpg.add_button(label = "Сохранить", callback = cls.logic.show_save_dialog)
-                    dpg.add_button(label = "Не сохранять")
+                    dpg.add_button(label = "Не сохранять", callback = cls.logic.on_close_request)
 
     @classmethod
     def setup_project_menu(cls):
