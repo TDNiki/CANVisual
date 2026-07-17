@@ -105,7 +105,7 @@ class CursorX:
         if self.x != x:
             self.update_cursors(x)
 
-        if y:
+        if y != None:
             if not dpg.does_item_exist(f"{signal_name}_ann{self.__tag}"):
                 self.annot.append(dpg.add_plot_annotation(label = f"{signal_name}: {y:.2f}", color = color, tag = f"{signal_name}_ann{self.__tag}", parent = plot_id, default_value = (x, y), offset = offset_annotation))
             else:
@@ -138,19 +138,11 @@ class PlotLogic:
         self.signal_theme = {} # signal id: theme
         self.__plot_window_tag = plot_window_tag
         self.event_hander = event_hander
-        self.pause = False
         self.__set_up_event()
         self.first_cursor = CursorX("first_c")
         self.second_cursor = CursorX("second_c")
-
+        self.selected_cursor = None
     
-
-    def set_pause(self):
-        if not self.pause: self.pause = True
-    
-    def set_resume(self):
-        if self.pause: self.pause = False
-
 
     def on_display_range_change(self, sender, sec_str: str):
         self.window_seconds = int (sec_str)
@@ -158,8 +150,7 @@ class PlotLogic:
     def __set_up_event(self):
         self.event_hander.sub("on_combo_plot_change", self.on_signal_change)
         self.event_hander.sub("on_plot_color_change", self.on_color_change)
-        self.event_hander.sub("pause", self.set_pause)
-        self.event_hander.sub("resume", self.set_resume)
+        self.event_hander.sub("clear_plots_request", self.__reset_data)
 
     def on_color_change(self, sender: str | None, color, signal_id, force_change: bool = True):
         if sender and not dpg.is_item_activated(sender): #обработка от спама вызовов
@@ -185,7 +176,6 @@ class PlotLogic:
 
 
     def update(self):
-        if self.pause: return
 
         max_time = 0
         xmin, xmax = dpg.get_axis_limits(self.subplots[0].x_axis)
@@ -418,7 +408,12 @@ class PlotLogic:
         if not is_checked: dpg.set_axis_limits_auto(self.subplots[0].x_axis)
     
     def __reset_data(self):
+        to_remove =  tuple(self.signal_locations.keys())
+        for sig in to_remove:
+            self.remove_signal(sig)
         self.signal_locations.clear()
+        self.first_cursor.hide()
+        self.second_cursor.hide()
 
     def on_signal_change(self, sender, plot_index:str, signal_name: tuple[int, str]):
         if not plot_index.isdigit(): 
@@ -507,30 +502,43 @@ class PlotLogic:
                 self.add_signal(key, plot_index)
                 self.on_color_change("", data['signals_color'][index], key) 
 
-    def on_cursor_change(self, sender, _, data):
-        cur_number, mode = data
-        match mode:
-            case -1:
-                if cur_number == 1:
-                    self.first_cursor.show()
-                else:
-                    self.second_cursor.show()
-                
-                dpg.configure_item(sender, user_data = (cur_number, 1))
-            case 0:
-                if cur_number == 1:
-                    self.first_cursor.hide()
-                else:
-                    self.second_cursor.hide()
-                
-                dpg.configure_item(sender, user_data = (cur_number, -1))
-            case 1:
-                if cur_number == 1:
-                    self.first_cursor.set_static()
-                else:
-                    self.second_cursor.set_static()
-                
-                dpg.configure_item(sender, user_data = (cur_number, 0))
+    def on_cursor_change(self, sender, _, cur_number):
+        
+        
+        if self.selected_cursor == cur_number: 
+            self.selected_cursor = None
+            if cur_number == 1: self.first_cursor.hide()
+            else: self.second_cursor.hide()
+        elif not self.selected_cursor:
+            if cur_number == 1 and self.first_cursor.mode >= 0: 
+                self.first_cursor.hide()
+            elif cur_number == 2 and self.second_cursor.mode >= 0: 
+                self.second_cursor.hide()
+            elif cur_number == 1:
+                self.selected_cursor = cur_number
+                self.first_cursor.show()
+            else: 
+                self.selected_cursor = cur_number
+                self.second_cursor.show()
+        else:
+            if cur_number == 1:
+                self.selected_cursor = cur_number
+                self.first_cursor.hide()
+                self.second_cursor.show()
+            else:
+                self.selected_cursor = cur_number
+                self.first_cursor.show()
+                self.second_cursor.hide()
+
+        
+
+    
+    def on_mouse_click(self):
+        """Handeler for cursor set"""
+        if not self.selected_cursor and not any(dpg.is_item_hovered(subplot.plot_id) for subplot in self.subplots): return
+        if self.selected_cursor == 1: self.first_cursor.set_static()
+        else: self.second_cursor.set_static()
+        self.selected_cursor = None
     
 
     
@@ -583,8 +591,8 @@ class PlotWindow(BaseWindow):
                 dpg.add_drag_int(label="Диапазон отображения", default_value=DEFAULT_DISPLAY_RANGE, min_value=MIN_DISPLAY_RANGE, max_value=MAX_DISPLAY_RANGE, callback = cls.logic.on_display_range_change)
 
             with dpg.group(horizontal = True):
-                dpg.add_button(label = "Курсор 1", user_data = (1, -1), callback = cls.logic.on_cursor_change)
-                dpg.add_button(label = "Курсор 2", user_data = (2, -1), callback = cls.logic.on_cursor_change)
+                dpg.add_button(label = "Курсор 1", user_data = 1, callback = cls.logic.on_cursor_change)
+                dpg.add_button(label = "Курсор 2", user_data = 2, callback = cls.logic.on_cursor_change)
 
             with dpg.tooltip(cls.tag, hide_on_activity = True) as tooltip:
                 dpg.add_text("", tag = f"{cls.tag}_tooltip", color = (255, 255, 255))
@@ -597,6 +605,9 @@ class PlotWindow(BaseWindow):
 
             
             dpg.bind_item_theme(tooltip, tooltip_theme)
+
+            with dpg.handler_registry():
+                dpg.add_mouse_click_handler(callback = cls.logic.on_mouse_click)
 
             cls.logic.rebuild()
 

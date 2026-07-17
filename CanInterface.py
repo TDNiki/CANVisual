@@ -253,6 +253,7 @@ class CANManager:
         return self.configs
     
     def connect(self, interface: str, channel: int, dbc_path = None, bitrate: int = 500000):
+        self.can_data.reset()
 
         if self.thread and self.thread.is_alive():
             raise RuntimeError("CAN connection already active")
@@ -298,7 +299,7 @@ class CANManager:
 
         return True if self.thread else False
 
-    def disconnect(self):
+    def disconnect(self, reset_data: bool = False):
 
         if not self.thread: return
 
@@ -318,7 +319,8 @@ class CANManager:
         self.driver = None
         self.scanner = None
 
-        self.can_data.reset()
+        if reset_data:
+            self.can_data.reset()
 
 
 class CanLogWriter:
@@ -363,6 +365,7 @@ class CanLogReader:
         self.path = None
 
     def read_log(self, log_path: str, dbc_path):
+        
         if not any(log_path.endswith(ext) for ext in self.__allowed_ext): raise ValueError(f"{self.__name__} doesn't allow this ext. Allowed ext: {self.__allowed_ext}")
 
         decoder = DBCDecoder(dbc_path)

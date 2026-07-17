@@ -62,7 +62,6 @@ class BusLogic:
             dpg.configure_item(self.load_log_tag, enabled = False)
             # dpg.configure_item(self.clr_online_btn, enabled = False)
 
-            self.event_handler.invoke("resume")
 
         except ValueError:
             return # пока заглушка для ошибки
@@ -70,15 +69,13 @@ class BusLogic:
             print(err)
 
     def on_disconnect_click(self):
-        self.event_handler.invoke("pause")
         self.can.disconnect()
         dpg.configure_item(self.con_button_tag, label = 'Подключить', enabled = True)
         dpg.configure_item(self.discon_button_tag, label = 'Отключено', enabled = False)
         dpg.configure_item(self.load_log_tag, enabled = True)
         # dpg.configure_item(self.clr_online_btn, enabled = True)
     
-    def on_clear_click(self):
-        self.event_handler.invoke("resume")
+
 
     def open_log_dialog(self, sender, data):
         if self.can.get_connection_status(): return
@@ -89,7 +86,6 @@ class BusLogic:
 
     def open_log(self, sender, data):
         if self.can.get_connection_status(): raise Exception("Can't read log while connect online")
-        self.event_handler.invoke("resume")
 
         log = CanLogReader()
         self.log_read = log
@@ -140,7 +136,10 @@ class BusLogic:
         dpg.configure_item(self.load_log_tag, enabled = True)
         dpg.configure_item(self.clear_log_tag, enabled = False)
         dpg.configure_item(self.con_button_tag, enabled = True)
+
+        self.event_handler.invoke("clear_plots_request")
         # dpg.configure_item(self.clr_online_btn, enabled = True)
+
     
     def clear(self):
         if self.log_read or self.can.get_connection_status():
