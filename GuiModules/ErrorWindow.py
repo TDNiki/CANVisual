@@ -31,17 +31,41 @@ class ErrorLogic:
             pos = (x, y)
         )
 
+        expired = []
+
         for error in self.cur_errors:
             timestamp, error_id = error
             if time.time()  - timestamp > self.error_time_life:
-                self.__delete_error(error_id)
+                expired.append(error_id)
+        
+        for error in expired:
+            self.__delete_error(error)
+            self.cur_errors.remove(error)
+        
+        if len(self.cur_errors) >= self.max_show_errors: return
+        
+        while len(self.cur_errors) < self.max_show_errors and not self.__error_to_show.empty(): 
+            module, title, desc = self.__error_to_show.get()
+            self.cur_errors.append((time.time(), self.__create_error(f"[{module}] {title}", desc)))
 
         
         
 
     
 
-    def __create_error(self): raise NotImplementedError()
+    def __create_error(self, title, desc): 
+        with dpg.child_window(
+        parent=self.window_tag,
+        border=True,
+        autosize_x=True,
+        height=60
+        ) as error_id:
+            
+            dpg.add_text(title)
+            dpg.add_text(desc, wrap=250) 
+
+        return error_id
+        
 
     def __delete_error(self, tag: str):
         if dpg.does_item_exist(tag):
@@ -72,5 +96,6 @@ class ErrorWindow(BaseWindow):
             no_move=True,
             no_close=True,
             autosize=True,
+            no_background=True,
             ):
             ...

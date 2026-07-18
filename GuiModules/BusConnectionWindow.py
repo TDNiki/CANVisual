@@ -55,6 +55,7 @@ class BusLogic:
     
     def on_connect_click(self, combo_interface_tag: str, bitrate_combo_tag: str):
         if self.log_read: raise Exception("Can't connect while log open")
+        breakpoint()
         try:
             interface, channel = dpg.get_value(combo_interface_tag).split(" : ") # format "vector : chnannel"
             bitrate = int(dpg.get_value(bitrate_combo_tag)) * 1000
