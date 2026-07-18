@@ -12,7 +12,7 @@ class BusLogic:
 
     dbc_path = None
 
-    def __init__(self, data: CANData, con_button_tag, discon_buttun_tag, load_log_tag, clear_log_tag, window_tag, log_status_tag, log_path, interface_tag, bitrate_tag, clr_online_btn, event):
+    def __init__(self, data: CANData, con_button_tag, discon_buttun_tag, load_log_tag, clear_log_tag, window_tag, log_status_tag, log_path, interface_tag, bitrate_tag, clr_online_btn, log_record_tag, event):
         self.can = CANManager(data)
         self.data = data
         self.con_button_tag = con_button_tag
@@ -29,6 +29,8 @@ class BusLogic:
         self.log_path = log_path
 
         self.event_handler = event
+        
+        self.log_record_tag = log_record_tag
 
     def update_available_interfaces(self, combo_tag: str):
         self.can.scan_available_configs()
@@ -60,6 +62,7 @@ class BusLogic:
             dpg.configure_item(self.con_button_tag, label = 'Подключен', enabled = False)
             dpg.configure_item(self.discon_button_tag, label = 'Отключить', enabled = True)
             dpg.configure_item(self.load_log_tag, enabled = False)
+            dpg.configure_item(self.log_record_tag, enabled = False)
             # dpg.configure_item(self.clr_online_btn, enabled = False)
 
 
@@ -73,6 +76,7 @@ class BusLogic:
         dpg.configure_item(self.con_button_tag, label = 'Подключить', enabled = True)
         dpg.configure_item(self.discon_button_tag, label = 'Отключено', enabled = False)
         dpg.configure_item(self.load_log_tag, enabled = True)
+        dpg.configure_item(self.log_record_tag, enabled = True)
         # dpg.configure_item(self.clr_online_btn, enabled = True)
     
 
@@ -218,7 +222,7 @@ class BusConnectionWindow(BaseWindow):
 
     @classmethod
     def setup(cls, *args, **kwargs):
-        cls.logic = BusLogic(kwargs['data'], cls.__connect_button_tag, cls.__disconnect_button_tag, cls.__load_log_tag, cls.__clear_log_tag, cls.tag, cls.__log_status_tag, kwargs['log_path'], cls.__interface_combo_tag, cls.__bitrate_combo_tag, cls.__clear_button_tag, event = kwargs['event_handler'])
+        cls.logic = BusLogic(kwargs['data'], cls.__connect_button_tag, cls.__disconnect_button_tag, cls.__load_log_tag, cls.__clear_log_tag, cls.tag, cls.__log_status_tag, kwargs['log_path'], cls.__interface_combo_tag, cls.__bitrate_combo_tag, cls.__clear_button_tag, cls.__is_logging_tag, event = kwargs['event_handler'])
         with dpg.child_window(
             tag=cls.tag,
             label=cls.title,

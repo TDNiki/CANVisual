@@ -105,7 +105,6 @@ class ProjectLogic:
         
     
     def open_project(self, sender, info):
-
         self.cur_project = self.state_manager.open_project(info['file_path_name'])
         self.save_path = info['file_path_name']
 
@@ -208,7 +207,7 @@ class ProjectWindow(BaseWindow):
             projects = cls.logic.state_manager.get_meta_data()
             if projects:
                 for project_name, values in projects.items():
-                    dpg.add_menu_item(label = path.basename(project_name).split(".")[0], callback =  lambda: cls.logic.open_project("", values))
+                    dpg.add_menu_item(label = path.basename(project_name).split(".")[0], user_data=values, callback=lambda s, a, u: cls.logic.open_project(s, u))
             else:
                 dpg.add_text("Не найдены")
         
