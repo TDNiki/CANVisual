@@ -588,7 +588,7 @@ class PlotWindow(BaseWindow):
                 dpg.add_button(label="Подгон X", callback=lambda: cls.logic.fit_x())
                 dpg.add_button(label="Подгон Y", callback=lambda: cls.logic.fit_y())
                 dpg.add_checkbox(tag="auto_x", label="Отслеживание по времени", callback=cls.logic.set_auto_scroll_x)
-                dpg.add_drag_int(label="Диапазон отображения", default_value=DEFAULT_DISPLAY_RANGE, min_value=MIN_DISPLAY_RANGE, max_value=MAX_DISPLAY_RANGE, callback = cls.logic.on_display_range_change)
+                dpg.add_slider_int(label="Диапазон отображения", default_value=DEFAULT_DISPLAY_RANGE, min_value=MIN_DISPLAY_RANGE, max_value=MAX_DISPLAY_RANGE, callback = cls.logic.on_display_range_change)
 
             with dpg.group(horizontal = True):
                 dpg.add_button(label = "Курсор 1", user_data = 1, callback = cls.logic.on_cursor_change)

@@ -19,12 +19,12 @@ FILE_EXT_COLOR = [150, 200, 255, 255]
 
 
 # Data settings
-MAX_DATA_IN_RAM = 120 # in sec; how much data will be stored in temporary memory that will be available for display on graphs
+MAX_DATA_IN_RAM = 240 # in sec; how much data will be stored in temporary memory that will be available for display on graphs
 
 
 # Display info in plots
 DEFAULT_DISPLAY_RANGE = 10 # sec
 MIN_DISPLAY_RANGE = DEFAULT_DISPLAY_RANGE
-MAX_DISPLAY_RANGE = 60 # sec
+MAX_DISPLAY_RANGE = MAX_DATA_IN_RAM / 2 # sec
 
 
