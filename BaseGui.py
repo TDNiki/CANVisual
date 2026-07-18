@@ -9,6 +9,8 @@ from GuiModules.MessagesWindow import MessagesWindow
 from GuiModules.SignalsWindow import SignalsWindow
 from GuiModules.PlotWindow import PlotWindow
 from GuiModules.ProjectWindow import ProjectWindow
+from GuiModules.ErrorWindow import ErrorWindow
+
 from CanInterface import CANData
 from EventHandler import EventHandler
 from settings import MAX_DATA_IN_RAM, FILE_LOG_BASE_NAME, APP_NAME
@@ -19,7 +21,7 @@ from ProjectManager import ProjectManager
 class AppGui:
     """"""
     
-    windows = [BusConnectionWindow, DBCConnectionWindow, SignalsWindow, PlotWindow]
+    windows = [BusConnectionWindow, DBCConnectionWindow, SignalsWindow, PlotWindow, ErrorWindow]
     additional_windows = [MessagesWindow, ProjectWindow]
 
     data = CANData(plot_data_max_sec=MAX_DATA_IN_RAM)
@@ -97,6 +99,7 @@ class AppGui:
                 with dpg.table_row(height=-1):
                     SignalsWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=-1)
                     PlotWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=-1)
+        ErrorWindow.setup()
 
         
         

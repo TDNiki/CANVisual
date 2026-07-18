@@ -536,7 +536,8 @@ class PlotLogic:
     def on_mouse_click(self):
         """Handeler for cursor set"""
         if not self.selected_cursor and not any(dpg.is_item_hovered(subplot.plot_id) for subplot in self.subplots): return
-        if self.selected_cursor == 1: self.first_cursor.set_static()
+        if self.selected_cursor == None: return
+        elif self.selected_cursor == 1: self.first_cursor.set_static()
         else: self.second_cursor.set_static()
         self.selected_cursor = None
     
