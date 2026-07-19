@@ -104,22 +104,26 @@ class ProjectLogic:
         
     
     def open_project(self, sender, info):
-        self.cur_project = self.state_manager.open_project(info['file_path_name'])
-        self.save_path = info['file_path_name']
+        try: 
+            self.cur_project = self.state_manager.open_project(info['file_path_name'])
+            self.save_path = info['file_path_name']
 
-        dbc = self.cur_project.get_settings(DBCConnectionWindow.tag)
-        if dbc:
-            DBCConnectionWindow.logic.load_info(dbc)
+            dbc = self.cur_project.get_settings(DBCConnectionWindow.tag)
+            if dbc:
+                DBCConnectionWindow.logic.load_info(dbc)
 
-        bus = self.cur_project.get_settings(BusConnectionWindow.tag)
-        if bus:
-             BusConnectionWindow.logic.load_info(bus)
-    
-        plot = self.cur_project.get_settings(PlotWindow.tag)
-        if plot:
-             PlotWindow.logic.load_info(plot)
+            bus = self.cur_project.get_settings(BusConnectionWindow.tag)
+            if bus:
+                    BusConnectionWindow.logic.load_info(bus)
 
-        self.__set_app_name(path.basename(info['file_path_name']).split('.')[0])
+            plot = self.cur_project.get_settings(PlotWindow.tag)
+            if plot:
+                    PlotWindow.logic.load_info(plot)
+
+            self.__set_app_name(path.basename(info['file_path_name']).split('.')[0])
+        except Exception as err:
+            self.event_handler.invoke("error", self.__class__.__name__, "Ошибка при открытии проекта", err)
+            self.close_project()
 
     def update(self): ...
     
