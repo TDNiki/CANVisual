@@ -97,7 +97,7 @@ class SignalLogic:
                         #dpg.add_drag_payload(parent=ui_obj, drag_data=sig, payload_type="plotting")
 
             except Exception as error: 
-                self.event_hander.invoke("error", self.__name__, "Ошибка вывода сигнала", str(error))
+                self.event_hander.invoke("error", self.__class__.__name__, "Ошибка вывода сигнала", str(error))
 
 
            

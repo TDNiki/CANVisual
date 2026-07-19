@@ -21,7 +21,7 @@ class ErrorLogic:
         self.__set_up_event()
 
     def __set_up_event(self):
-        self.event_hander.sub("error", self.add_error)
+        self.event_handler.sub("error", self.add_error)
 
 
     def add_error(self, from_module: str, error_title: str, error_desc: str):
@@ -37,15 +37,16 @@ class ErrorLogic:
             pos = (x, y)
         )
 
+
         expired = []
 
         for error in self.cur_errors:
             timestamp, error_id = error
             if time.time()  - timestamp > self.error_time_life:
-                expired.append(error_id)
+                expired.append(error)
         
         for error in expired:
-            self.__delete_error(error)
+            self.__delete_error(error[1])
             self.cur_errors.remove(error)
         
         if len(self.cur_errors) >= self.max_show_errors: return
@@ -63,8 +64,8 @@ class ErrorLogic:
         with dpg.child_window(
         parent=self.window_tag,
         border=True,
-        autosize_x=True,
-        height=60
+        width=350,
+        height=100
         ) as error_id:
             
             dpg.add_text(title)

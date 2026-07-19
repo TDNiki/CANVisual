@@ -68,7 +68,6 @@ class ProjectLogic:
              dpg.set_viewport_title(APP_NAME)
 
     def save_as_project(self, sender, info): 
-        print(f"saveas {info['file_path_name']}")
         if not self.cur_project: self.cur_project = self.state_manager.init_project()
         self.save_path = info['file_path_name']
         self.save()
@@ -201,7 +200,7 @@ class ProjectWindow(BaseWindow):
     def setup_project_menu(cls):
         dpg.add_menu_item(label = "Открыть", callback = cls.logic.on_open_project_btn_click)
         dpg.add_menu_item(label = "Сохранить", callback = cls.logic.save_project)
-        dpg.add_menu_item(label = "Сохранить как", callback = cls.logic.save_as_project)
+        dpg.add_menu_item(label = "Сохранить как", callback = cls.logic.show_save_dialog)
 
         with dpg.menu(label = "Последние"):
             projects = cls.logic.state_manager.get_meta_data()

@@ -8,7 +8,6 @@ from can.interfaces.vector import VectorBus
 from collections import deque# bufer, max = auto deletion first
 from queue import Queue
 
-
 class CANDriver:
     def __init__(self, interface, channel, bitrate=500000, app_name = None):
 
@@ -364,49 +363,57 @@ class CanLogReader:
         self.event = threading.Event()
         self.path = None
 
-    def read_log(self, log_path: str, dbc_path):
+    def read_log(self, log_path: str, dbc_path, error_handler = None):
         
         if not any(log_path.endswith(ext) for ext in self.__allowed_ext): raise ValueError(f"{self.__name__} doesn't allow this ext. Allowed ext: {self.__allowed_ext}")
 
-        decoder = DBCDecoder(dbc_path)
+        try:
+            decoder = DBCDecoder(dbc_path)
+        except Exception as err:
+            error_handler(err)
+
         self.path = log_path
-
-        with can.BLFReader(log_path) as reader:
-            
-            for msg in reader:
-                if self.event.is_set():
-                    return
-
-                if self.__init_time is None:
-                    self.__init_time = msg.timestamp
-
-                name, signals_info = decoder.decode(msg)
-                if signals_info is None: continue
-
-                if not msg.arbitration_id in self.messages:
-                    self.messages[msg.arbitration_id] = {
-                        "dbc_name": name or "",
-                        "is_dbc": True,
-                        "decoded": {}
-                    }
+        try:
+            with can.BLFReader(log_path) as reader:
                 
-                
+                for msg in reader:
+                    if self.event.is_set():
+                        return
 
-                for sname, value in signals_info.items():
-                    if sname not in self.messages[msg.arbitration_id]['decoded']: self.messages[msg.arbitration_id]['decoded'][sname] = 0
-                    if (msg.arbitration_id, sname) not in self.signal_plot:
-                        self.signal_plot[(msg.arbitration_id, sname)] = {
-                            "time": [],
-                            "value": []
+                    if self.__init_time is None:
+                        self.__init_time = msg.timestamp
+
+                    name, signals_info = decoder.decode(msg)
+                    if signals_info is None: continue
+
+                    if not msg.arbitration_id in self.messages:
+                        self.messages[msg.arbitration_id] = {
+                            "dbc_name": name or "",
+                            "is_dbc": True,
+                            "decoded": {}
                         }
-                    self.signal_plot[(msg.arbitration_id, sname)]['time'].append(msg.timestamp - self.__init_time)
-                    self.signal_plot[(msg.arbitration_id, sname)]['value'].append(value)
-                
-        for _, data in self.signal_plot.items():
-            for axis, value  in data.items():
-                data[axis] = np.array(value, dtype=np.float64)
+                    
+                    
 
-        self.is_ready = True
+                    for sname, value in signals_info.items():
+                        if sname not in self.messages[msg.arbitration_id]['decoded']: self.messages[msg.arbitration_id]['decoded'][sname] = 0
+                        if (msg.arbitration_id, sname) not in self.signal_plot:
+                            self.signal_plot[(msg.arbitration_id, sname)] = {
+                                "time": [],
+                                "value": []
+                            }
+                        self.signal_plot[(msg.arbitration_id, sname)]['time'].append(msg.timestamp - self.__init_time)
+                        self.signal_plot[(msg.arbitration_id, sname)]['value'].append(value)
+                    
+            for _, data in self.signal_plot.items():
+                for axis, value  in data.items():
+                    data[axis] = np.array(value, dtype=np.float64)
+
+            self.is_ready = True
+        except FileNotFoundError as err:
+            error_handler(err)
+        except Exception as err:
+            error_handler(err)
 
 
 

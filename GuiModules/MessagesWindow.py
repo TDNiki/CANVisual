@@ -60,7 +60,7 @@ class MessagesLogic:
         if self.__is_follow_trace: dpg.set_y_scroll(self.msg_trace_tag, -1)
     
     def update(self): 
-        if self.is_window_active and not self.data.static_mode:
+        if self.is_window_active and not self.data.is_static_mode():
             self._update_rates()    
             self._update_track()
 

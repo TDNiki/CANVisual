@@ -138,7 +138,7 @@ class AppGui:
                 try:
                     window.logic.update()
                 except Exception as err:
-                    self.event_handler.invoke("error", self.__name__, "Общая ошибка", str(err))
+                    self.event_handler.invoke("error", self.__class__.__name__, "Общая ошибка", str(err))
             
             self.__last_update_time = current_time
 

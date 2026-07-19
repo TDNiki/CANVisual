@@ -6,6 +6,7 @@ from CanInterface import CANManager, CanLogReader, CANData
 from settings import FILE_EXT_COLOR
 from datetime import datetime
 from os import path
+from queue import Queue
 
 
 class BusLogic:
@@ -31,6 +32,7 @@ class BusLogic:
         self.event_handler = event
         
         self.log_record_tag = log_record_tag
+        self.cmd = Queue() # i can't close thread from hisself, so that a small solution
 
     def update_available_interfaces(self, combo_tag: str):
         self.can.scan_available_configs()
@@ -55,7 +57,7 @@ class BusLogic:
     
     def on_connect_click(self, combo_interface_tag: str, bitrate_combo_tag: str):
         if self.log_read: raise Exception("Can't connect while log open")
-        breakpoint()
+
         try:
             interface, channel = dpg.get_value(combo_interface_tag).split(" : ") # format "vector : chnannel"
             bitrate = int(dpg.get_value(bitrate_combo_tag)) * 1000
@@ -68,9 +70,9 @@ class BusLogic:
 
 
         except ValueError as err:
-            self.event_handler.invoke("error", self.__name__, "Ошибка подключения", f"Введенные данные не соответствуют формату: {err}")
+            self.event_handler.invoke("error", self.__class__.__name__, "Ошибка подключения", f"Введенные данные не соответствуют формату: {err}")
         except Exception as err:
-            self.event_handler.invoke("error", self.__name__, "Ошибка подключения", str(err))
+            self.event_handler.invoke("error", self.__class__.__name__, "Ошибка подключения", str(err))
 
     def on_disconnect_click(self):
         self.can.disconnect()
@@ -88,6 +90,11 @@ class BusLogic:
         if self.dbc_path is None: raise ValueError("dbc file is required")
 
         dpg.show_item(f"{self.window_tag}_file_dialog_offline")
+    
+    def on_open_log_error(self, err):
+        self.event_handler.invoke("error", self.__class__.__name__, "Ошибка открытия лога", str(err))
+        self.cmd.put(self.clear_log)
+
 
     def open_log(self, sender, data):
         if self.can.get_connection_status(): raise Exception("Can't read log while connect online")
@@ -95,7 +102,7 @@ class BusLogic:
         log = CanLogReader()
         self.log_read = log
         
-        self.log_thread_read = threading.Thread(target = log.read_log, args=(data['file_path_name'], self.dbc_path), daemon = True)
+        self.log_thread_read = threading.Thread(target = log.read_log, args=(data['file_path_name'], self.dbc_path, self.on_open_log_error), daemon = True)
 
         self.log_thread_read.start()
 
@@ -124,6 +131,10 @@ class BusLogic:
             self.log_thread_read = None
             self.log_read = None
             dpg.configure_item(self.log_status_tag, default_value = "Лог загружен")
+        
+        while not self.cmd.empty():
+            self.cmd.get()()
+
     
     def clear_log(self):
         print('button is pressed')

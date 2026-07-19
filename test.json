@@ -4,7 +4,39 @@
         "file_name": "j1939(Camozzi)new251.dbc"
     },
     "bus": {
-        "file_path_name": "c:\\Users\\NikiD\\Desktop\\camozzi\\CANVisual\\CanLogs\\CANLOG_2026_07_08_16_58_55.blf",
-        "file_name": "CANLOG_2026_07_08_16_58_55.blf"
+        "bitrate": "500",
+        "interface": "vector",
+        "channel": "0"
+    },
+    "plot": {
+        "plot_count": [
+            2,
+            2
+        ],
+        "signals_locations": {
+            "217056000_EngPercentLoadAtCurrentSpeed": 1,
+            "217056256_EngSpeed": 2,
+            "217056256_ActualEngPercentTorque": 0
+        },
+        "signals_color": [
+            [
+                49.537254333496094,
+                86.59607696533203,
+                183.7490234375,
+                255.0
+            ],
+            [
+                206.24705505371094,
+                157.24705505371094,
+                22.239215850830078,
+                255.0
+            ],
+            [
+                232.89804077148438,
+                234.84706115722656,
+                238.7490234375,
+                255.0
+            ]
+        ]
     }
 }
