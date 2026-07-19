@@ -10,6 +10,7 @@ from settings import FILE_EXT_COLOR, APP_NAME
 from GuiModules.BusConnectionWindow import BusConnectionWindow
 from GuiModules.DBCConnectionWindow import DBCConnectionWindow
 from GuiModules.PlotWindow import PlotWindow
+from FileDialog import file_dialog
 
 from os import path
 
@@ -29,9 +30,10 @@ class ProjectLogic:
         ...
 
     def show_save_dialog(self):
-        if dpg.is_item_shown(f"{self.window_tag}_file_dialog_wprj"): return
-        if dpg.is_item_shown(f"{self.window_tag}_confirm_action"): dpg.hide_item(f"{self.window_tag}_confirm_action")
-        dpg.show_item(f"{self.window_tag}_file_dialog_wprj")
+        # if dpg.is_item_shown(f"{self.window_tag}_file_dialog_wprj"): return
+        # if dpg.is_item_shown(f"{self.window_tag}_confirm_action"): dpg.hide_item(f"{self.window_tag}_confirm_action")
+        file_dialog(self.save_as_project, [".json"], title = "Выберите место для сохранения")
+        # dpg.show_item(f"{self.window_tag}_file_dialog_wprj")
 
     def request_close(self):
         x = (dpg.get_viewport_client_width() - dpg.get_item_width(f"{self.window_tag}_confirm_action")) // 2
@@ -98,7 +100,8 @@ class ProjectLogic:
     def on_open_project_btn_click(self, sender):
         if self.cur_project: self.request_close()
 
-        dpg.show_item(f"{self.window_tag}_file_dialog_oprj")
+        # dpg.show_item(f"{self.window_tag}_file_dialog_oprj")
+        file_dialog(self.open_project, [".json"], title = "Выберите настройки проекта")
         
 
         
@@ -155,29 +158,29 @@ class ProjectWindow(BaseWindow):
     def setup(cls, *args, **kwargs):
         cls.logic = ProjectLogic(kwargs['state_manager'], kwargs['event_handler'], cls.tag)
 
-        with dpg.file_dialog(
-                        label = "Выбрать Проект",
-                        directory_selector=False,
-                        show=False,
-                        tag=f"{cls.tag}_file_dialog_oprj",
-                        file_count=1,
-                        callback = cls.logic.open_project,
-                        width=700,
-                        height=400
-                    ):
-                        dpg.add_file_extension(".json", color=FILE_EXT_COLOR)
+        # with dpg.file_dialog(
+        #                 label = "Выбрать Проект",
+        #                 directory_selector=False,
+        #                 show=False,
+        #                 tag=f"{cls.tag}_file_dialog_oprj",
+        #                 file_count=1,
+        #                 callback = cls.logic.open_project,
+        #                 width=700,
+        #                 height=400
+        #             ):
+        #                 dpg.add_file_extension(".json", color=FILE_EXT_COLOR)
         
-        with dpg.file_dialog(
-                        label = "Выбрать место для сохранения Проекта",
-                        show=False,
-                        tag=f"{cls.tag}_file_dialog_wprj",
-                        default_filename="",
-                        file_count=1,
-                        callback = cls.logic.save_as_project,
-                        width=700,
-                        height=400
-                    ):
-                        dpg.add_file_extension(".json", color=FILE_EXT_COLOR)
+        # with dpg.file_dialog(
+        #                 label = "Выбрать место для сохранения Проекта",
+        #                 show=False,
+        #                 tag=f"{cls.tag}_file_dialog_wprj",
+        #                 default_filename="",
+        #                 file_count=1,
+        #                 callback = cls.logic.save_as_project,
+        #                 width=700,
+        #                 height=400
+        #             ):
+        #                 dpg.add_file_extension(".json", color=FILE_EXT_COLOR)
         
         with dpg.window(
             label = "Подтвердите действие",

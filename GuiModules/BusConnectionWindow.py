@@ -7,6 +7,7 @@ from settings import FILE_EXT_COLOR
 from datetime import datetime
 from os import path
 from queue import Queue
+from FileDialog import file_dialog
 
 
 class BusLogic:
@@ -91,7 +92,8 @@ class BusLogic:
             self.event_handler.invoke("error", self.__class__.__name__, "Ошибка при открытии лога", "Сначала необходимо загрузить dbc")
             return
 
-        dpg.show_item(f"{self.window_tag}_file_dialog_offline")
+        file_dialog(self.open_log, [".blf"], self.log_path)
+        # dpg.show_item(f"{self.window_tag}_file_dialog_offline")
     
     def on_open_log_error(self, err):
         self.event_handler.invoke("error", self.__class__.__name__, "Ошибка открытия лога", str(err))
@@ -299,16 +301,16 @@ class BusConnectionWindow(BaseWindow):
                         dpg.add_text("Лог не загружен", tag = cls.__log_status_tag)
                         dpg.add_button(label = "Очитстить", tag = cls.__clear_log_tag, enabled = False, callback = cls.logic.clear_log)
 
-                    with dpg.file_dialog(
-                        label = "Выбрать BLF",
-                        default_path = kwargs['log_path'],
-                        directory_selector=False,
-                        show=False,
-                        tag=f"{cls.tag}_file_dialog_offline",
-                        file_count=1,
-                        callback=cls.logic.open_log,
-                        width=700,
-                        height=400
-                    ):
-                        dpg.add_file_extension(".blf", color=FILE_EXT_COLOR)
+                    # with dpg.file_dialog(
+                    #     label = "Выбрать BLF",
+                    #     default_path = kwargs['log_path'],
+                    #     directory_selector=False,
+                    #     show=False,
+                    #     tag=f"{cls.tag}_file_dialog_offline",
+                    #     file_count=1,
+                    #     callback=cls.logic.open_log,
+                    #     width=700,
+                    #     height=400
+                    # ):
+                    #     dpg.add_file_extension(".blf", color=FILE_EXT_COLOR)
 

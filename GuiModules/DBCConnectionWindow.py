@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from BaseWindow import BaseWindow
 from GuiModules.BusConnectionWindow import BusConnectionWindow
+from FileDialog import file_dialog
 from os import path
 
 from settings import FILE_EXT_COLOR
@@ -20,7 +21,6 @@ class DBCLogic:
 
     def on_file_load(self, sender_event, data):
         """Callbacck for file_dialog result"""
-
         BusConnectionWindow.logic.set_dbc(data['file_path_name'])
         dpg.configure_item(self.status_dbc, default_value = f"Подключенный dbc: {data['file_name'].split('.')[0]}")
         self.dbc_path = data['file_path_name']
@@ -69,22 +69,22 @@ class DBCConnectionWindow(BaseWindow):
 
                     dpg.add_button(
                             label="Найти DBC",
-                            callback=lambda: dpg.show_item(f"{cls.tag}_file_dialog"),
+                            callback = lambda: file_dialog(cls.logic.on_file_load, [".dbc"]),
                             
                     )
 
                     dpg.add_text(default_value = "Подключенный dbc: отстутсвует", tag = cls.__dbc_connected_tag)
             
 
-            with dpg.file_dialog(
-                directory_selector=False,
-                show=False,
-                tag=f"{cls.tag}_file_dialog",
-                callback=cls.logic.on_file_load,
-                file_count=1,
-                width=700,
-                height=400
-            ):
-                dpg.add_file_extension(".dbc", color=FILE_EXT_COLOR)
+            # with dpg.file_dialog(
+            #     directory_selector=False,
+            #     show=False,
+            #     tag=f"{cls.tag}_file_dialog",
+            #     callback=cls.logic.on_file_load,
+            #     file_count=1,
+            #     width=700,
+            #     height=400
+            # ):
+            #     dpg.add_file_extension(".dbc", color=FILE_EXT_COLOR)
 
 
