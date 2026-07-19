@@ -96,7 +96,7 @@ class BusLogic:
         # dpg.show_item(f"{self.window_tag}_file_dialog_offline")
     
     def on_open_log_error(self, err):
-        self.event_handler.invoke("error", self.__class__.__name__, "Ошибка открытия лога", str(err))
+        self.event_handler.invoke("error", self.__class__.__name__, "Ошибка при открытии лога", str(err))
         self.cmd.put(self.clear_log)
 
 
@@ -129,9 +129,12 @@ class BusLogic:
 
     def update(self):
         if self.log_read and self.log_read.is_ready:
-            self.data.enable_static_mode(self.log_read.path)
-            self.data.messages = self.log_read.messages
-            self.data.signal_plot = self.log_read.signal_plot
+            if self.log_read.messages:
+                self.data.enable_static_mode(self.log_read.path)
+                self.data.messages = self.log_read.messages
+                self.data.signal_plot = self.log_read.signal_plot
+            else:
+                self.event_handler.invoke("error", self.__class__.__name__, "Ошиюка при чтении лога", "При чтении не удалось загрузить данные из лога. Проверьте корректность файла расшифровки")
             self.log_thread_read = None
             self.log_read = None
             dpg.configure_item(self.log_status_tag, default_value = "Лог загружен")

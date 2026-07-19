@@ -365,7 +365,8 @@ class CanLogReader:
 
     def read_log(self, log_path: str, dbc_path, error_handler = None):
         
-        if not any(log_path.endswith(ext) for ext in self.__allowed_ext): raise ValueError(f"{self.__name__} doesn't allow this ext. Allowed ext: {self.__allowed_ext}")
+        if not any(log_path.endswith(ext) for ext in self.__allowed_ext):
+            error_handler(f"{self.__name__} doesn't allow this ext. Allowed ext: {self.__allowed_ext}")
 
         try:
             decoder = DBCDecoder(dbc_path)
@@ -375,7 +376,6 @@ class CanLogReader:
         self.path = log_path
         try:
             with can.BLFReader(log_path) as reader:
-                
                 for msg in reader:
                     if self.event.is_set():
                         return
@@ -384,6 +384,7 @@ class CanLogReader:
                         self.__init_time = msg.timestamp
 
                     name, signals_info = decoder.decode(msg)
+
                     if signals_info is None: continue
 
                     if not msg.arbitration_id in self.messages:
@@ -394,8 +395,8 @@ class CanLogReader:
                         }
                     
                     
-
                     for sname, value in signals_info.items():
+
                         if sname not in self.messages[msg.arbitration_id]['decoded']: self.messages[msg.arbitration_id]['decoded'][sname] = 0
                         if (msg.arbitration_id, sname) not in self.signal_plot:
                             self.signal_plot[(msg.arbitration_id, sname)] = {
