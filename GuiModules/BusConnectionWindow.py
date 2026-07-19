@@ -87,7 +87,9 @@ class BusLogic:
     def open_log_dialog(self, sender, data):
         if self.can.get_connection_status(): return
 
-        if self.dbc_path is None: raise ValueError("dbc file is required")
+        if self.dbc_path is None: 
+            self.event_handler.invoke("error", self.__class__.__name__, "Ошибка при открытии лога", "Сначала необходимо загрузить dbc")
+            return
 
         dpg.show_item(f"{self.window_tag}_file_dialog_offline")
     

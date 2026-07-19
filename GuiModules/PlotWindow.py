@@ -68,6 +68,7 @@ class CursorX:
             label = self.__tag,
             show = False if self.mode < 0 else True,
             parent = plot.plot_id,
+            default_value= self.x,
             callback = self.__on_x_change
             )
     
@@ -109,7 +110,12 @@ class CursorX:
             if not dpg.does_item_exist(f"{signal_name}_ann{self.__tag}"):
                 self.annot.append(dpg.add_plot_annotation(label = f"{signal_name}: {y:.2f}", color = color, tag = f"{signal_name}_ann{self.__tag}", parent = plot_id, default_value = (x, y), offset = offset_annotation))
             else:
-                dpg.configure_item(f"{signal_name}_ann{self.__tag}", label = f"{signal_name}: {y:.2f}", color = color, parent = plot_id, default_value = (x, y))
+                if dpg.get_item_parent(f"{signal_name}_ann{self.__tag}") != plot_id:
+                    dpg.delete_item(f"{signal_name}_ann{self.__tag}")
+                    self.annot.remove(f"{signal_name}_ann{self.__tag}")
+                    self.annot.append(dpg.add_plot_annotation(label = f"{signal_name}: {y:.2f}", color = color, tag = f"{signal_name}_ann{self.__tag}", parent = plot_id, default_value = (x, y), offset = offset_annotation))
+                else:
+                    dpg.configure_item(f"{signal_name}_ann{self.__tag}", label = f"{signal_name}: {y:.2f}", color = color, default_value = (x, y))
 
             
 

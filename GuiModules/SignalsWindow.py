@@ -34,6 +34,8 @@ class SignalLogic:
         msg_id, sig = signal_id
         if not dpg.does_item_exist(f"{msg_id}_{sig}_combo_value"): # пришлось сделать для синхр данных, если проект открыт раньше чем сигналы появились
             dpg.add_string_value(default_value = str(plot_id), parent = "shared_value_registr", tag = f"{msg_id}_{sig}_combo_value")
+        else:
+            dpg.set_value(f"{msg_id}_{sig}_combo_value", plot_id)
 
     def update(self): 
 
