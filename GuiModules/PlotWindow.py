@@ -227,6 +227,7 @@ class PlotLogic:
             except KeyError:
                 pass
             except Exception as err:
+                self.event_hander("error", self.__name__, "Ошибка обработки графиков", str(err))
                 self.__reset_data()
                 self.rebuild()
 

@@ -99,7 +99,8 @@ class AppGui:
                 with dpg.table_row(height=-1):
                     SignalsWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=-1)
                     PlotWindow.setup(data = self.data, event_handler = self.event_handler, width=-1 ,height=-1)
-        ErrorWindow.setup()
+        
+        ErrorWindow.setup(event_handler = self.event_handler)
 
         
         
@@ -137,7 +138,7 @@ class AppGui:
                 try:
                     window.logic.update()
                 except Exception as err:
-                    print(err)
+                    self.event_handler.invoke("error", self.__name__, "Общая ошибка", str(err))
             
             self.__last_update_time = current_time
 

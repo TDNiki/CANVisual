@@ -11,12 +11,18 @@ class ErrorLogic:
 
     
 
-    def __init__(self, window_tag: str):
+    def __init__(self, window_tag: str, event):
         self.__error_to_show = Queue()
         self.cur_errors = list()
         self.max_show_errors = 4
         self.window_tag = window_tag
         self.error_time_life = ERROR_TIMELIFE
+        self.event_handler = event
+        self.__set_up_event()
+
+    def __set_up_event(self):
+        self.event_hander.sub("error", self.add_error)
+
 
     def add_error(self, from_module: str, error_title: str, error_desc: str):
         self.__error_to_show.put((from_module, error_title, error_desc))
@@ -87,7 +93,7 @@ class ErrorWindow(BaseWindow):
 
     @classmethod
     def setup(cls, *args, **kwargs):
-        cls.logic = ErrorLogic(cls.tag)
+        cls.logic = ErrorLogic(cls.tag, kwargs['event_handler'])
         with dpg.window(
             tag=cls.tag,
             show=True,

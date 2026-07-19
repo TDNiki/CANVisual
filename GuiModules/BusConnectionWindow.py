@@ -67,10 +67,10 @@ class BusLogic:
             # dpg.configure_item(self.clr_online_btn, enabled = False)
 
 
-        except ValueError:
-            return # пока заглушка для ошибки
+        except ValueError as err:
+            self.event_handler.invoke("error", self.__name__, "Ошибка подключения", f"Введенные данные не соответствуют формату: {err}")
         except Exception as err:
-            print(err)
+            self.event_handler.invoke("error", self.__name__, "Ошибка подключения", str(err))
 
     def on_disconnect_click(self):
         self.can.disconnect()
