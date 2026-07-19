@@ -96,15 +96,14 @@ class ProjectManager:
                 json.dump(self.meta, data, indent=4)
 
     def open_project(self, path: str):
-        try:
-            with open(path, mode = 'r', encoding="utf-8") as data:
-                project = ProjectData(json.load(data))
-            
-            self.set_meta_data(os.path.basename(path), path)
 
-            return project
-        except Exception as err:
-            raise Exception(f"Can't read this format of file, be sure of correct ext or pattern of save file: {err}")
+        with open(path, mode = 'r', encoding="utf-8") as data:
+            project = ProjectData(json.load(data))
+        
+        self.set_meta_data(os.path.basename(path), path)
+
+        return project
+
         
     
     def init_project(self):
